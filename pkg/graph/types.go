@@ -3,6 +3,7 @@ package graph
 type Graph interface {
 	// Access
 	Node(nidx NodeIndex) *Node
+	Children(nidx NodeIndex) []NodeIndex
 	Edge(eidx EdgeIndex) *Edge
 	Nodes(eidx EdgeIndex) [2][]NodeIndex
 
@@ -18,7 +19,6 @@ type Properties map[string]interface{}
 type Node struct {
 	Properties Properties
 	Parent     NodeIndex
-	Children   []NodeIndex
 	Edges      []EdgeIndex
 }
 
