@@ -1,5 +1,16 @@
 package graph
 
+import (
+	"errors"
+	"fmt"
+)
+
+// ErrIllegalAction is returned when an illegal action was attempted to be performed on a graph.
+var ErrIllegalAction = errors.New("error during graph manipulation")
+
+// NoParent is the NodeIndex used for a node's Parent that doesn't exist.
+var NoParent = NodeIndex{-1, -1}
+
 type graph struct {
 	parent Graph
 
@@ -8,6 +19,7 @@ type graph struct {
 	edges     map[EdgeIndex]*Edge
 	edgeNodes map[EdgeIndex]*edgeNodes
 }
+
 type edgeNodes struct {
 	Nodes [2][]NodeIndex
 }
@@ -15,7 +27,7 @@ type edgeNodes struct {
 func New(parent Graph) Graph {
 	if parent == nil {
 		return &graph{
-			nodes:     [][]*Node{{{Properties: Properties{}}}},
+			nodes:     [][]*Node{{{Properties: Properties{}, Parent: NoParent}}},
 			children:  map[NodeIndex][]NodeIndex{},
 			edges:     map[EdgeIndex]*Edge{},
 			edgeNodes: map[EdgeIndex]*edgeNodes{},
@@ -32,12 +44,18 @@ func New(parent Graph) Graph {
 }
 
 func (g *graph) Node(nidx NodeIndex) *Node {
+	if node := g.nodeSameInstance(nidx); node != nil {
+		return node
+	} else if g.parent != nil {
+		return g.parent.Node(nidx)
+	} else {
+		return nil
+	}
+}
+
+func (g *graph) nodeSameInstance(nidx NodeIndex) *Node {
 	if len(g.nodes) <= nidx[0] || len(g.nodes[nidx[0]]) <= nidx[1] {
-		if g.parent == nil {
-			return nil
-		} else {
-			return g.parent.Node(nidx)
-		}
+		return nil
 	} else {
 		return g.nodes[nidx[0]][nidx[1]]
 	}
@@ -74,13 +92,16 @@ func (g *graph) Nodes(eidx EdgeIndex) [2][]NodeIndex {
 	return nodes
 }
 
-func (g *graph) Add(parent NodeIndex, edges []EdgeIndex) NodeIndex {
+func (g *graph) Add(parent NodeIndex, edges []EdgeIndex) (NodeIndex, error) {
+	if g.Node(parent) == nil {
+		return NodeIndex{}, fmt.Errorf("%w: parent node %v doesn't exist", ErrIllegalAction, parent)
+	}
+
 	nidx := NodeIndex{parent[0] + 1, g.nodesInLayer(parent[0] + 1)}
 	node := g.createNodeAt(nidx)
 	node.Parent = parent
 	node.Edges = append(node.Edges, edges...)
 
-	// g.Node(parent).Children = append(g.Node(parent).Children, nidx)
 	if children, ok := g.children[parent]; ok {
 		g.children[parent] = append(children, nidx)
 	} else {
@@ -89,6 +110,10 @@ func (g *graph) Add(parent NodeIndex, edges []EdgeIndex) NodeIndex {
 
 	for _, eidx := range edges {
 		s := g.findNodeInEdges(parent, eidx)
+		if s == -1 {
+			return NodeIndex{}, fmt.Errorf("%w: edge %v doesn't belong to parent", ErrIllegalAction, eidx)
+		}
+
 		if nodes, ok := g.edgeNodes[eidx]; ok {
 			nodes.Nodes[s] = append(nodes.Nodes[s], nidx)
 		} else {
@@ -98,7 +123,7 @@ func (g *graph) Add(parent NodeIndex, edges []EdgeIndex) NodeIndex {
 		}
 	}
 
-	return nidx
+	return nidx, nil
 }
 
 func (g *graph) nodesInLayer(l int) int {
@@ -141,25 +166,30 @@ func (g *graph) findNodeInEdges(nidx NodeIndex, eidx EdgeIndex) int {
 	if g.parent != nil {
 		return g.parent.(*graph).findNodeInEdges(nidx, eidx)
 	} else {
-		// TODO: untestable
-		return 0
+		return -1
 	}
 }
 
-func (g *graph) Link(a, b NodeIndex) EdgeIndex {
-	eidx := EdgeIndex(len(g.edges))
+func (g *graph) Link(a, b NodeIndex) (EdgeIndex, error) {
+	if nodeA, nodeB := g.nodeSameInstance(a), g.nodeSameInstance(b); nodeA == nil || nodeB == nil {
+		return -1, fmt.Errorf("%w: nodes must be created in the same graph as the edge", ErrIllegalAction)
+	} else if nodeA.Parent != nodeB.Parent {
+		return -1, fmt.Errorf("%w: nodes must be created in the same graph as the edge", ErrIllegalAction)
+	} else {
+		eidx := EdgeIndex(len(g.edges))
 
-	edge := &Edge{
-		Properties: Properties{},
+		edge := &Edge{
+			Properties: Properties{},
+		}
+		g.edges[eidx] = edge
+
+		g.edgeNodes[eidx] = &edgeNodes{
+			Nodes: [2][]NodeIndex{{a}, {b}},
+		}
+
+		nodeA.Edges = append(nodeA.Edges, eidx)
+		nodeB.Edges = append(nodeB.Edges, eidx)
+
+		return EdgeIndex(eidx), nil
 	}
-	g.edges[eidx] = edge
-
-	g.edgeNodes[eidx] = &edgeNodes{
-		Nodes: [2][]NodeIndex{{a}, {b}},
-	}
-
-	g.Node(a).Edges = append(g.Node(a).Edges, eidx)
-	g.Node(b).Edges = append(g.Node(b).Edges, eidx)
-
-	return EdgeIndex(eidx)
 }

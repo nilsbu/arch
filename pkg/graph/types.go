@@ -8,8 +8,8 @@ type Graph interface {
 	Nodes(eidx EdgeIndex) [2][]NodeIndex
 
 	// Manipulate
-	Add(parent NodeIndex, edges []EdgeIndex) NodeIndex
-	Link(a, b NodeIndex) EdgeIndex
+	Add(parent NodeIndex, edges []EdgeIndex) (NodeIndex, error)
+	Link(a, b NodeIndex) (EdgeIndex, error)
 }
 
 type NodeIndex [2]int

@@ -1,6 +1,8 @@
 package graph_test
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -54,7 +56,7 @@ func TestGraph(t *testing.T) {
 				return graph.New(nil)
 			},
 			map[graph.NodeIndex]*graph.Node{
-				{0, 0}: {Properties: graph.Properties{}}},
+				{0, 0}: {Properties: graph.Properties{}, Parent: graph.NoParent}},
 			map[graph.NodeIndex][]graph.NodeIndex{},
 			map[graph.EdgeIndex]*graph.Edge{},
 			map[graph.EdgeIndex][2][]graph.NodeIndex{},
@@ -67,7 +69,7 @@ func TestGraph(t *testing.T) {
 				return g
 			},
 			map[graph.NodeIndex]*graph.Node{
-				{0, 0}: {Properties: graph.Properties{"A": "asdf"}}},
+				{0, 0}: {Properties: graph.Properties{"A": "asdf"}, Parent: graph.NoParent}},
 			map[graph.NodeIndex][]graph.NodeIndex{},
 			map[graph.EdgeIndex]*graph.Edge{},
 			map[graph.EdgeIndex][2][]graph.NodeIndex{},
@@ -76,11 +78,12 @@ func TestGraph(t *testing.T) {
 			"node with child",
 			func() graph.Graph {
 				g := graph.New(nil)
-				g.Node(g.Add(graph.NodeIndex{}, nil)).Properties["A"] = "asdf"
+				nidx, _ := g.Add(graph.NodeIndex{}, nil)
+				g.Node(nidx).Properties["A"] = "asdf"
 				return g
 			},
 			map[graph.NodeIndex]*graph.Node{
-				{0, 0}: {Properties: graph.Properties{}},
+				{0, 0}: {Properties: graph.Properties{}, Parent: graph.NoParent},
 				{1, 0}: {Properties: graph.Properties{"A": "asdf"}, Parent: graph.NodeIndex{0, 0}},
 			},
 			map[graph.NodeIndex][]graph.NodeIndex{
@@ -93,12 +96,14 @@ func TestGraph(t *testing.T) {
 			"link 2 children",
 			func() graph.Graph {
 				g := graph.New(nil)
-				n0, n1 := g.Add(graph.NodeIndex{}, nil), g.Add(graph.NodeIndex{}, nil)
-				g.Edge(g.Link(n0, n1)).Properties = graph.Properties{"X": 123}
+				n0, _ := g.Add(graph.NodeIndex{}, nil)
+				n1, _ := g.Add(graph.NodeIndex{}, nil)
+				eidx, _ := g.Link(n0, n1)
+				g.Edge(eidx).Properties = graph.Properties{"X": 123}
 				return g
 			},
 			map[graph.NodeIndex]*graph.Node{
-				{0, 0}: {Properties: graph.Properties{}},
+				{0, 0}: {Properties: graph.Properties{}, Parent: graph.NoParent},
 				{1, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
 				{1, 1}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
 			},
@@ -116,13 +121,14 @@ func TestGraph(t *testing.T) {
 			"inherit edge",
 			func() graph.Graph {
 				g := graph.New(nil)
-				n0, n1 := g.Add(graph.NodeIndex{}, nil), g.Add(graph.NodeIndex{}, nil)
-				eidx := g.Link(n0, n1)
+				n0, _ := g.Add(graph.NodeIndex{}, nil)
+				n1, _ := g.Add(graph.NodeIndex{}, nil)
+				eidx, _ := g.Link(n0, n1)
 				g.Add(n1, []graph.EdgeIndex{eidx})
 				return g
 			},
 			map[graph.NodeIndex]*graph.Node{
-				{0, 0}: {Properties: graph.Properties{}},
+				{0, 0}: {Properties: graph.Properties{}, Parent: graph.NoParent},
 				{1, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
 				{1, 1}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
 				{2, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{1, 1}, Edges: []graph.EdgeIndex{0}},
@@ -142,13 +148,14 @@ func TestGraph(t *testing.T) {
 			"append empty graph",
 			func() graph.Graph {
 				g := graph.New(nil)
-				n0, n1 := g.Add(graph.NodeIndex{}, nil), g.Add(graph.NodeIndex{}, nil)
-				eidx := g.Link(n0, n1)
+				n0, _ := g.Add(graph.NodeIndex{}, nil)
+				n1, _ := g.Add(graph.NodeIndex{}, nil)
+				eidx, _ := g.Link(n0, n1)
 				g.Add(n1, []graph.EdgeIndex{eidx})
 				return graph.New(g)
 			},
 			map[graph.NodeIndex]*graph.Node{
-				{0, 0}: {Properties: graph.Properties{}},
+				{0, 0}: {Properties: graph.Properties{}, Parent: graph.NoParent},
 				{1, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
 				{1, 1}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
 				{2, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{1, 1}, Edges: []graph.EdgeIndex{0}},
@@ -168,12 +175,14 @@ func TestGraph(t *testing.T) {
 			"link inherited children",
 			func() graph.Graph {
 				g := graph.New(graph.New(nil))
-				n0, n1 := g.Add(graph.NodeIndex{}, nil), g.Add(graph.NodeIndex{}, nil)
-				g.Edge(g.Link(n0, n1)).Properties = graph.Properties{"X": 123}
+				n0, _ := g.Add(graph.NodeIndex{}, nil)
+				n1, _ := g.Add(graph.NodeIndex{}, nil)
+				eidx, _ := g.Link(n0, n1)
+				g.Edge(eidx).Properties = graph.Properties{"X": 123}
 				return g
 			},
 			map[graph.NodeIndex]*graph.Node{
-				{0, 0}: {Properties: graph.Properties{}},
+				{0, 0}: {Properties: graph.Properties{}, Parent: graph.NoParent},
 				{1, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
 				{1, 1}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
 			},
@@ -191,14 +200,15 @@ func TestGraph(t *testing.T) {
 			"link after inheritance",
 			func() graph.Graph {
 				g := graph.New(nil)
-				n0, n1 := g.Add(graph.NodeIndex{}, nil), g.Add(graph.NodeIndex{}, nil)
-				eidx := g.Link(n0, n1)
+				n0, _ := g.Add(graph.NodeIndex{}, nil)
+				n1, _ := g.Add(graph.NodeIndex{}, nil)
+				eidx, _ := g.Link(n0, n1)
 				g = graph.New(g)
 				g.Add(n1, []graph.EdgeIndex{eidx})
 				return g
 			},
 			map[graph.NodeIndex]*graph.Node{
-				{0, 0}: {Properties: graph.Properties{}},
+				{0, 0}: {Properties: graph.Properties{}, Parent: graph.NoParent},
 				{1, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
 				{1, 1}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
 				{2, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{1, 1}, Edges: []graph.EdgeIndex{0}},
@@ -218,18 +228,19 @@ func TestGraph(t *testing.T) {
 			"changes in later graphs don't affect the earlier ones",
 			func() graph.Graph {
 				g := graph.New(nil)
-				n0, n1 := g.Add(graph.NodeIndex{}, nil), g.Add(graph.NodeIndex{}, nil)
-				eidx := g.Link(n0, n1)
+				n0, _ := g.Add(graph.NodeIndex{}, nil)
+				n1, _ := g.Add(graph.NodeIndex{}, nil)
+				eidx, _ := g.Link(n0, n1)
 				g.Add(n1, []graph.EdgeIndex{eidx})
 				g2 := graph.New(g)
 				g2.Add(graph.NodeIndex{}, nil)
-				n3 := g2.Add(n0, []graph.EdgeIndex{eidx})
-				n4 := g2.Add(n1, nil)
+				n3, _ := g2.Add(n0, []graph.EdgeIndex{eidx})
+				n4, _ := g2.Add(n1, nil)
 				g2.Link(n3, n4)
 				return g
 			},
 			map[graph.NodeIndex]*graph.Node{
-				{0, 0}: {Properties: graph.Properties{}},
+				{0, 0}: {Properties: graph.Properties{}, Parent: graph.NoParent},
 				{1, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
 				{1, 1}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
 				{2, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{1, 1}, Edges: []graph.EdgeIndex{0}},
@@ -245,53 +256,6 @@ func TestGraph(t *testing.T) {
 				0: {{{1, 0}}, {{1, 1}, {2, 0}}},
 			},
 		},
-		// { TODO this is forbidden, test it!
-		// 	"link after inheritance",
-		// 	func() graph.Graph {
-		// 		g := graph.New(nil)
-		// 		n0, n1 := g.Add(graph.NodeIndex{}, nil), g.Add(graph.NodeIndex{}, nil)
-		// 		g = graph.New(g)
-		// 		eidx := g.Link(n0, n1)
-		// 		g.Add(n1, []graph.EdgeIndex{eidx})
-		// 		return g
-		// 	},
-		// 	map[graph.NodeIndex]*graph.Node{
-		// 		{0, 0}: {Properties: graph.Properties{}, Children: []graph.NodeIndex{{1, 0}, {1, 1}}},
-		// 		{1, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
-		// 		{1, 1}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Children: []graph.NodeIndex{{2, 0}}, Edges: []graph.EdgeIndex{0}},
-		// 		{2, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{1, 1}, Edges: []graph.EdgeIndex{0}},
-		// 	},
-		// 	map[graph.EdgeIndex]*graph.Edge{
-		// 		0: {Properties: graph.Properties{}},
-		// 	},
-		// 	map[graph.EdgeIndex][2][]graph.NodeIndex{
-		// 		0: {{{1, 0}}, {{1, 1}, {2, 0}}},
-		// 	},
-		// },
-		// { TODO this is forbidden, test it!
-		// 	"link across inheritance",
-		// 	func() graph.Graph {
-		// 		g := graph.New(nil)
-		// 		n0 := g.Add(graph.NodeIndex{}, nil)
-		// 		g = graph.New(g)
-		// 		n1 := g.Add(graph.NodeIndex{}, nil)
-		// 		eidx := g.Link(n0, n1)
-		// 		g.Add(n1, []graph.EdgeIndex{eidx})
-		// 		return g
-		// 	},
-		// 	map[graph.NodeIndex]*graph.Node{
-		// 		{0, 0}: {Properties: graph.Properties{}, Children: []graph.NodeIndex{{1, 0}, {1, 1}}},
-		// 		{1, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
-		// 		{1, 1}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Children: []graph.NodeIndex{{2, 0}}, Edges: []graph.EdgeIndex{0}},
-		// 		{2, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{1, 1}, Edges: []graph.EdgeIndex{0}},
-		// 	},
-		// 	map[graph.EdgeIndex]*graph.Edge{
-		// 		0: {Properties: graph.Properties{}},
-		// 	},
-		// 	map[graph.EdgeIndex][2][]graph.NodeIndex{
-		// 		0: {{{1, 0}}, {{1, 1}, {2, 0}}},
-		// 	},
-		// },
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			g := c.setup()
@@ -312,5 +276,101 @@ func TestGraph(t *testing.T) {
 				checkEdgeNodes(t, eidx, en, g.Nodes(eidx))
 			}
 		})
+	}
+}
+
+func TestLinkANonExistent(t *testing.T) {
+	g := graph.New(nil)
+	n0, _ := g.Add(graph.NodeIndex{}, nil)
+	if _, err := g.Link(n0, graph.NodeIndex{1, 1}); err == nil {
+		t.Error("expected error but none ocurred")
+	} else if !errors.Is(err, graph.ErrIllegalAction) {
+		fmt.Println(err)
+		t.Error("link error must be an 'ErrIllegalAction'")
+	}
+}
+
+func TestLinkBNonExistent(t *testing.T) {
+	g := graph.New(nil)
+	n0, _ := g.Add(graph.NodeIndex{}, nil)
+	if _, err := g.Link(graph.NodeIndex{1, 1}, n0); err == nil {
+		t.Error("expected error but none ocurred")
+	} else if !errors.Is(err, graph.ErrIllegalAction) {
+		fmt.Println(err)
+		t.Error("link error must be an 'ErrIllegalAction'")
+	}
+}
+
+func TestLinkWithOwnParent(t *testing.T) {
+	g := graph.New(nil)
+	n0, _ := g.Add(graph.NodeIndex{}, nil)
+	if _, err := g.Link(graph.NodeIndex{}, n0); err == nil {
+		t.Error("expected error but none ocurred")
+	} else if !errors.Is(err, graph.ErrIllegalAction) {
+		fmt.Println(err)
+		t.Error("link error must be an 'ErrIllegalAction'")
+	}
+}
+
+func TestLinkAfterInheritance(t *testing.T) {
+	g := graph.New(nil)
+	n0, _ := g.Add(graph.NodeIndex{}, nil)
+	n1, _ := g.Add(graph.NodeIndex{}, nil)
+	g = graph.New(g)
+
+	if _, err := g.Link(n0, n1); err == nil {
+		t.Error("expected error but none ocurred")
+	} else if !errors.Is(err, graph.ErrIllegalAction) {
+		fmt.Println(err)
+		t.Error("link error must be an 'ErrIllegalAction'")
+	}
+}
+
+func TestOneLinkedNodeBeforeInheritance(t *testing.T) {
+	g := graph.New(nil)
+	n0, _ := g.Add(graph.NodeIndex{}, nil)
+	g = graph.New(g)
+	n1, _ := g.Add(graph.NodeIndex{}, nil)
+	if _, err := g.Link(n0, n1); err == nil {
+		t.Error("expected error but none ocurred")
+	} else if !errors.Is(err, graph.ErrIllegalAction) {
+		t.Error("link error must be an 'ErrIllegalAction'")
+	}
+}
+
+func TestGetNonExistingNode(t *testing.T) {
+	g := graph.New(nil)
+	if g.Node(graph.NodeIndex{1, 0}) != nil {
+		t.Error("no node should be returned")
+	}
+}
+
+func TestAddToFalseParent(t *testing.T) {
+	g := graph.New(nil)
+	if _, err := g.Add(graph.NodeIndex{1, 0}, nil); err == nil {
+		t.Error("must return error")
+	} else if !errors.Is(err, graph.ErrIllegalAction) {
+		t.Error("error must be 'ErrIllegalAction'")
+	}
+}
+
+func TestAddWithNonexistentEdge(t *testing.T) {
+	g := graph.New(nil)
+	if _, err := g.Add(graph.NodeIndex{0, 0}, []graph.EdgeIndex{1}); err == nil {
+		t.Error("must return error")
+	} else if !errors.Is(err, graph.ErrIllegalAction) {
+		t.Error("error must be 'ErrIllegalAction'")
+	}
+}
+
+func TestAddWithFalseEdge(t *testing.T) {
+	g := graph.New(nil)
+	n0, _ := g.Add(graph.NodeIndex{}, nil)
+	n1, _ := g.Add(graph.NodeIndex{}, nil)
+	eidx, _ := g.Link(n0, n1)
+	if _, err := g.Add(graph.NodeIndex{0, 0}, []graph.EdgeIndex{eidx}); err == nil {
+		t.Error("must return error")
+	} else if !errors.Is(err, graph.ErrIllegalAction) {
+		t.Error("error must be 'ErrIllegalAction'")
 	}
 }
