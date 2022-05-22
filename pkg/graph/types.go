@@ -16,16 +16,17 @@ package graph
 //
 // Even though graphs are undirected, an ordering of nodes can be inferred through the fact that Nodes() will
 // always return a node as either the first or second slice.
-type Graph interface {
-	// Access
-	Node(nidx NodeIndex) *Node
-	Children(nidx NodeIndex) []NodeIndex
-	Edge(eidx EdgeIndex) *Edge
-	Nodes(eidx EdgeIndex) [2][]NodeIndex
+type Graph struct {
+	parent *Graph
 
-	// Manipulate
-	Add(parent NodeIndex, edges []EdgeIndex) (NodeIndex, error)
-	Link(a, b NodeIndex) (EdgeIndex, error)
+	nodes     [][]*Node
+	children  map[NodeIndex][]NodeIndex
+	edges     map[EdgeIndex]*Edge
+	edgeNodes map[EdgeIndex]*edgeNodes
+}
+
+type edgeNodes struct {
+	Nodes [2][]NodeIndex
 }
 
 type NodeIndex [2]int

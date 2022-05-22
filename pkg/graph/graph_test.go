@@ -44,7 +44,7 @@ func checkEdgeNodes(t *testing.T, eidx graph.EdgeIndex, expect, actual [2][]grap
 func TestGraph(t *testing.T) {
 	for _, c := range []struct {
 		name      string
-		setup     func() graph.Graph
+		setup     func() *graph.Graph
 		nodes     map[graph.NodeIndex]*graph.Node
 		children  map[graph.NodeIndex][]graph.NodeIndex
 		edges     map[graph.EdgeIndex]*graph.Edge
@@ -52,7 +52,7 @@ func TestGraph(t *testing.T) {
 	}{
 		{
 			"only root",
-			func() graph.Graph {
+			func() *graph.Graph {
 				return graph.New(nil)
 			},
 			map[graph.NodeIndex]*graph.Node{
@@ -63,7 +63,7 @@ func TestGraph(t *testing.T) {
 		},
 		{
 			"root has property",
-			func() graph.Graph {
+			func() *graph.Graph {
 				g := graph.New(nil)
 				g.Node(graph.NodeIndex{}).Properties["A"] = "asdf"
 				return g
@@ -76,7 +76,7 @@ func TestGraph(t *testing.T) {
 		},
 		{
 			"node with child",
-			func() graph.Graph {
+			func() *graph.Graph {
 				g := graph.New(nil)
 				nidx, _ := g.Add(graph.NodeIndex{}, nil)
 				g.Node(nidx).Properties["A"] = "asdf"
@@ -94,7 +94,7 @@ func TestGraph(t *testing.T) {
 		},
 		{
 			"link 2 children",
-			func() graph.Graph {
+			func() *graph.Graph {
 				g := graph.New(nil)
 				n0, _ := g.Add(graph.NodeIndex{}, nil)
 				n1, _ := g.Add(graph.NodeIndex{}, nil)
@@ -119,7 +119,7 @@ func TestGraph(t *testing.T) {
 		},
 		{
 			"inherit edge",
-			func() graph.Graph {
+			func() *graph.Graph {
 				g := graph.New(nil)
 				n0, _ := g.Add(graph.NodeIndex{}, nil)
 				n1, _ := g.Add(graph.NodeIndex{}, nil)
@@ -146,7 +146,7 @@ func TestGraph(t *testing.T) {
 		},
 		{
 			"append empty graph",
-			func() graph.Graph {
+			func() *graph.Graph {
 				g := graph.New(nil)
 				n0, _ := g.Add(graph.NodeIndex{}, nil)
 				n1, _ := g.Add(graph.NodeIndex{}, nil)
@@ -173,7 +173,7 @@ func TestGraph(t *testing.T) {
 		},
 		{
 			"link inherited children",
-			func() graph.Graph {
+			func() *graph.Graph {
 				g := graph.New(graph.New(nil))
 				n0, _ := g.Add(graph.NodeIndex{}, nil)
 				n1, _ := g.Add(graph.NodeIndex{}, nil)
@@ -198,7 +198,7 @@ func TestGraph(t *testing.T) {
 		},
 		{
 			"link after inheritance",
-			func() graph.Graph {
+			func() *graph.Graph {
 				g := graph.New(nil)
 				n0, _ := g.Add(graph.NodeIndex{}, nil)
 				n1, _ := g.Add(graph.NodeIndex{}, nil)
@@ -226,7 +226,7 @@ func TestGraph(t *testing.T) {
 		},
 		{
 			"changes in later graphs don't affect the earlier ones",
-			func() graph.Graph {
+			func() *graph.Graph {
 				g := graph.New(nil)
 				n0, _ := g.Add(graph.NodeIndex{}, nil)
 				n1, _ := g.Add(graph.NodeIndex{}, nil)

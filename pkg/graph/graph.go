@@ -11,29 +11,16 @@ var ErrIllegalAction = errors.New("error during graph manipulation")
 // NoParent is the NodeIndex used for a node's Parent that doesn't exist.
 var NoParent = NodeIndex{-1, -1}
 
-type graph struct {
-	parent Graph
-
-	nodes     [][]*Node
-	children  map[NodeIndex][]NodeIndex
-	edges     map[EdgeIndex]*Edge
-	edgeNodes map[EdgeIndex]*edgeNodes
-}
-
-type edgeNodes struct {
-	Nodes [2][]NodeIndex
-}
-
-func New(parent Graph) Graph {
+func New(parent *Graph) *Graph {
 	if parent == nil {
-		return &graph{
+		return &Graph{
 			nodes:     [][]*Node{{{Properties: Properties{}, Parent: NoParent}}},
 			children:  map[NodeIndex][]NodeIndex{},
 			edges:     map[EdgeIndex]*Edge{},
 			edgeNodes: map[EdgeIndex]*edgeNodes{},
 		}
 	} else {
-		return &graph{
+		return &Graph{
 			parent:    parent,
 			nodes:     [][]*Node{},
 			children:  map[NodeIndex][]NodeIndex{},
@@ -43,7 +30,7 @@ func New(parent Graph) Graph {
 	}
 }
 
-func (g *graph) Node(nidx NodeIndex) *Node {
+func (g *Graph) Node(nidx NodeIndex) *Node {
 	if node := g.nodeSameInstance(nidx); node != nil {
 		return node
 	} else if g.parent != nil {
@@ -53,7 +40,7 @@ func (g *graph) Node(nidx NodeIndex) *Node {
 	}
 }
 
-func (g *graph) nodeSameInstance(nidx NodeIndex) *Node {
+func (g *Graph) nodeSameInstance(nidx NodeIndex) *Node {
 	if len(g.nodes) <= nidx[0] || len(g.nodes[nidx[0]]) <= nidx[1] {
 		return nil
 	} else {
@@ -61,7 +48,7 @@ func (g *graph) nodeSameInstance(nidx NodeIndex) *Node {
 	}
 }
 
-func (g *graph) Children(nidx NodeIndex) []NodeIndex {
+func (g *Graph) Children(nidx NodeIndex) []NodeIndex {
 	var children []NodeIndex
 	if g.parent != nil {
 		children = g.parent.Children(nidx)
@@ -72,7 +59,7 @@ func (g *graph) Children(nidx NodeIndex) []NodeIndex {
 	return children
 }
 
-func (g *graph) Edge(eidx EdgeIndex) *Edge {
+func (g *Graph) Edge(eidx EdgeIndex) *Edge {
 	if edge, ok := g.edges[eidx]; ok {
 		return edge
 	} else {
@@ -80,7 +67,7 @@ func (g *graph) Edge(eidx EdgeIndex) *Edge {
 	}
 }
 
-func (g *graph) Nodes(eidx EdgeIndex) [2][]NodeIndex {
+func (g *Graph) Nodes(eidx EdgeIndex) [2][]NodeIndex {
 	var nodes [2][]NodeIndex
 	if g.parent != nil {
 		nodes = g.parent.Nodes(eidx)
@@ -92,7 +79,7 @@ func (g *graph) Nodes(eidx EdgeIndex) [2][]NodeIndex {
 	return nodes
 }
 
-func (g *graph) Add(parent NodeIndex, edges []EdgeIndex) (NodeIndex, error) {
+func (g *Graph) Add(parent NodeIndex, edges []EdgeIndex) (NodeIndex, error) {
 	if g.Node(parent) == nil {
 		return NodeIndex{}, fmt.Errorf("%w: parent node %v doesn't exist", ErrIllegalAction, parent)
 	}
@@ -126,10 +113,10 @@ func (g *graph) Add(parent NodeIndex, edges []EdgeIndex) (NodeIndex, error) {
 	return nidx, nil
 }
 
-func (g *graph) nodesInLayer(l int) int {
+func (g *Graph) nodesInLayer(l int) int {
 	n := 0
 	if g.parent != nil {
-		n = g.parent.(*graph).nodesInLayer(l)
+		n = g.parent.nodesInLayer(l)
 	}
 	if len(g.nodes) > l {
 		n += len(g.nodes[l])
@@ -137,7 +124,7 @@ func (g *graph) nodesInLayer(l int) int {
 	return n
 }
 
-func (g *graph) createNodeAt(nidx NodeIndex) *Node {
+func (g *Graph) createNodeAt(nidx NodeIndex) *Node {
 	for len(g.nodes) <= nidx[0] {
 		g.nodes = append(g.nodes, []*Node{})
 	}
@@ -153,7 +140,7 @@ func (g *graph) createNodeAt(nidx NodeIndex) *Node {
 	return node
 }
 
-func (g *graph) findNodeInEdges(nidx NodeIndex, eidx EdgeIndex) int {
+func (g *Graph) findNodeInEdges(nidx NodeIndex, eidx EdgeIndex) int {
 	if nodes, ok := g.edgeNodes[eidx]; ok {
 		for i, side := range nodes.Nodes {
 			for _, idx := range side {
@@ -164,13 +151,13 @@ func (g *graph) findNodeInEdges(nidx NodeIndex, eidx EdgeIndex) int {
 		}
 	}
 	if g.parent != nil {
-		return g.parent.(*graph).findNodeInEdges(nidx, eidx)
+		return g.parent.findNodeInEdges(nidx, eidx)
 	} else {
 		return -1
 	}
 }
 
-func (g *graph) Link(a, b NodeIndex) (EdgeIndex, error) {
+func (g *Graph) Link(a, b NodeIndex) (EdgeIndex, error) {
 	if nodeA, nodeB := g.nodeSameInstance(a), g.nodeSameInstance(b); nodeA == nil || nodeB == nil {
 		return -1, fmt.Errorf("%w: nodes must be created in the same graph as the edge", ErrIllegalAction)
 	} else if nodeA.Parent != nodeB.Parent {
