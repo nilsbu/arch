@@ -279,6 +279,77 @@ func TestGraph(t *testing.T) {
 	}
 }
 
+func TestGetNonExistingNode(t *testing.T) {
+	g := graph.New(nil)
+	if g.Node(graph.NodeIndex{1, 0}) != nil {
+		t.Error("no node should be returned")
+	}
+}
+
+func TestAddToFalseParent(t *testing.T) {
+	g := graph.New(nil)
+	if _, err := g.Add(graph.NodeIndex{1, 0}, nil); err == nil {
+		t.Error("must return error")
+	} else if !errors.Is(err, graph.ErrIllegalAction) {
+		t.Error("error must be 'ErrIllegalAction'")
+	}
+}
+
+func TestAddWithNonexistentEdge(t *testing.T) {
+	g := graph.New(nil)
+	if _, err := g.Add(graph.NodeIndex{0, 0}, []graph.EdgeIndex{1}); err == nil {
+		t.Error("must return error")
+	} else if !errors.Is(err, graph.ErrIllegalAction) {
+		t.Error("error must be 'ErrIllegalAction'")
+	}
+}
+
+func TestAddWithFalseEdge(t *testing.T) {
+	g := graph.New(nil)
+	n0, _ := g.Add(graph.NodeIndex{}, nil)
+	n1, _ := g.Add(graph.NodeIndex{}, nil)
+	eidx, _ := g.Link(n0, n1)
+	if _, err := g.Add(graph.NodeIndex{0, 0}, []graph.EdgeIndex{eidx}); err == nil {
+		t.Error("must return error")
+	} else if !errors.Is(err, graph.ErrIllegalAction) {
+		t.Error("error must be 'ErrIllegalAction'")
+	}
+}
+
+func TestInheritEdgeTwice(t *testing.T) {
+	g := graph.New(nil)
+	n0, _ := g.Add(graph.NodeIndex{}, nil)
+	n1, _ := g.Add(graph.NodeIndex{}, nil)
+	eidx, _ := g.Link(n0, n1)
+	g.Add(n1, []graph.EdgeIndex{eidx})
+	if _, err := g.Add(n1, []graph.EdgeIndex{eidx}); err == nil {
+		t.Error("must return error")
+	} else if !errors.Is(err, graph.ErrIllegalAction) {
+		t.Error("error must be 'ErrIllegalAction'")
+	}
+}
+
+func TestAddWithoutParent(t *testing.T) {
+	g := graph.New(nil)
+	if _, err := g.Add(graph.NoParent, nil); err == nil {
+		t.Error("must return error")
+	} else if !errors.Is(err, graph.ErrIllegalAction) {
+		t.Error("error must be 'ErrIllegalAction'")
+	}
+}
+
+func TestLinkeNodesTwice(t *testing.T) {
+	g := graph.New(nil)
+	n0, _ := g.Add(graph.NodeIndex{}, nil)
+	n1, _ := g.Add(graph.NodeIndex{}, nil)
+	g.Link(n0, n1)
+	if _, err := g.Link(n0, n1); err == nil {
+		t.Error("must return error")
+	} else if !errors.Is(err, graph.ErrIllegalAction) {
+		t.Error("error must be 'ErrIllegalAction'")
+	}
+}
+
 func TestLinkANonExistent(t *testing.T) {
 	g := graph.New(nil)
 	n0, _ := g.Add(graph.NodeIndex{}, nil)
@@ -337,44 +408,3 @@ func TestOneLinkedNodeBeforeInheritance(t *testing.T) {
 		t.Error("link error must be an 'ErrIllegalAction'")
 	}
 }
-
-func TestGetNonExistingNode(t *testing.T) {
-	g := graph.New(nil)
-	if g.Node(graph.NodeIndex{1, 0}) != nil {
-		t.Error("no node should be returned")
-	}
-}
-
-func TestAddToFalseParent(t *testing.T) {
-	g := graph.New(nil)
-	if _, err := g.Add(graph.NodeIndex{1, 0}, nil); err == nil {
-		t.Error("must return error")
-	} else if !errors.Is(err, graph.ErrIllegalAction) {
-		t.Error("error must be 'ErrIllegalAction'")
-	}
-}
-
-func TestAddWithNonexistentEdge(t *testing.T) {
-	g := graph.New(nil)
-	if _, err := g.Add(graph.NodeIndex{0, 0}, []graph.EdgeIndex{1}); err == nil {
-		t.Error("must return error")
-	} else if !errors.Is(err, graph.ErrIllegalAction) {
-		t.Error("error must be 'ErrIllegalAction'")
-	}
-}
-
-func TestAddWithFalseEdge(t *testing.T) {
-	g := graph.New(nil)
-	n0, _ := g.Add(graph.NodeIndex{}, nil)
-	n1, _ := g.Add(graph.NodeIndex{}, nil)
-	eidx, _ := g.Link(n0, n1)
-	if _, err := g.Add(graph.NodeIndex{0, 0}, []graph.EdgeIndex{eidx}); err == nil {
-		t.Error("must return error")
-	} else if !errors.Is(err, graph.ErrIllegalAction) {
-		t.Error("error must be 'ErrIllegalAction'")
-	}
-}
-
-// TODO Ensure that each edge is only inherited once.
-// TODO Ensure that nodes aren't linked twice.
-// TODO Ensure that nodes without parent can't be added.

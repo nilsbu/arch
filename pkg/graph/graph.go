@@ -92,7 +92,9 @@ func (g *Graph) Nodes(eidx EdgeIndex) [2][]NodeIndex {
 // The node has to have a parent and it may inherit edges that the parent has. Each edge may only be inherited once.
 // The node will lie on the layer directly under the parent.
 func (g *Graph) Add(parent NodeIndex, edges []EdgeIndex) (NodeIndex, error) {
-	if g.Node(parent) == nil {
+	if parent[0] < 0 || parent[1] < 0 {
+		return NodeIndex{}, fmt.Errorf("%w: cannot add node without parent", ErrIllegalAction)
+	} else if g.Node(parent) == nil {
 		return NodeIndex{}, fmt.Errorf("%w: parent node %v doesn't exist", ErrIllegalAction, parent)
 	}
 
@@ -155,10 +157,8 @@ func (g *Graph) createNodeAt(nidx NodeIndex) *Node {
 func (g *Graph) findNodeInEdges(nidx NodeIndex, eidx EdgeIndex) int {
 	if nodes, ok := g.edgeNodes[eidx]; ok {
 		for i, side := range nodes.Nodes {
-			for _, idx := range side {
-				if nidx == idx {
-					return i
-				}
+			if len(side) > 0 && side[len(side)-1] == nidx {
+				return i
 			}
 		}
 	}
@@ -175,7 +175,9 @@ func (g *Graph) Link(a, b NodeIndex) (EdgeIndex, error) {
 	if nodeA, nodeB := g.nodeSameInstance(a), g.nodeSameInstance(b); nodeA == nil || nodeB == nil {
 		return -1, fmt.Errorf("%w: nodes must be created in the same graph as the edge", ErrIllegalAction)
 	} else if nodeA.Parent != nodeB.Parent {
-		return -1, fmt.Errorf("%w: nodes must be created in the same graph as the edge", ErrIllegalAction)
+		return -1, fmt.Errorf("%w: nodes must have the same parent", ErrIllegalAction)
+	} else if g.linkExists(a, b) {
+		return -1, fmt.Errorf("%w: nodes are already linked", ErrIllegalAction)
 	} else {
 		eidx := EdgeIndex(len(g.edges))
 
@@ -193,4 +195,17 @@ func (g *Graph) Link(a, b NodeIndex) (EdgeIndex, error) {
 
 		return EdgeIndex(eidx), nil
 	}
+}
+
+// linkExists checks if two nodes that have the same parent are already linked. It will not look for edges between nodes
+// of different parents.
+func (g *Graph) linkExists(a, b NodeIndex) bool {
+	for _, en := range g.edgeNodes {
+		if (en.Nodes[0][0] == a && en.Nodes[1][0] == b) || (en.Nodes[0][0] == b && en.Nodes[1][0] == a) {
+			return true
+		}
+	}
+
+	// g.parent isn't tested since linkExists() is used in Link() and a link across graph instances isn't permitted
+	return false
 }
