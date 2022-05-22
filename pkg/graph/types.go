@@ -29,16 +29,32 @@ type edgeNodes struct {
 	Nodes [2][]NodeIndex
 }
 
+// A NodeIndes is the index of a node in a graph.
+// The first number refers to the layer on which the node exists, the second to the index of the node within the layer.
 type NodeIndex [2]int
+
+// An EdgeIndex is the index of an edge in a graph.
 type EdgeIndex int
+
+// Properties is keyed data associates with a node or edge.
 type Properties map[string]interface{}
 
+// A Node is a node (or vertex) in the fundamental unit of which graphs are formed.
 type Node struct {
+	// Properties containes user data.
 	Properties Properties
-	Parent     NodeIndex
-	Edges      []EdgeIndex
+
+	// Parent refers to the parent node in the hierarchy. The root node will have NoParent as its Parent.
+	// Editing this value is not permitted.
+	Parent NodeIndex
+
+	// Edges are the edges that are connected to the node.
+	// Editing this slice directly is not permitted.
+	Edges []EdgeIndex
 }
 
+// An Edge is a link between two unbroken line of parent-child related nodes in a graph.
 type Edge struct {
+	// Properties containes user data.
 	Properties Properties
 }

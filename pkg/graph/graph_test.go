@@ -376,3 +376,5 @@ func TestAddWithFalseEdge(t *testing.T) {
 }
 
 // TODO Ensure that each edge is only inherited once.
+// TODO Ensure that nodes aren't linked twice.
+// TODO Ensure that nodes without parent can't be added.

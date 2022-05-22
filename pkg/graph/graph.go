@@ -11,6 +11,11 @@ var ErrIllegalAction = errors.New("error during graph manipulation")
 // NoParent is the NodeIndex used for a node's Parent that doesn't exist.
 var NoParent = NodeIndex{-1, -1}
 
+// New creates a new Graph.
+// If parent is not nil, the new graph will inherit nodes and edges from the parent. Adding nodes and connections to the
+// new graph will not affect the parent. The existing nodes and edges, however, are shared. This means that alterations
+// of Properties will be shared. Making changes to parents using Add() and Link() after creating a new graph from it
+// may not be safe and should generally not be done.
 func New(parent *Graph) *Graph {
 	if parent == nil {
 		return &Graph{
@@ -30,6 +35,7 @@ func New(parent *Graph) *Graph {
 	}
 }
 
+// Node returns the Node associated with a NodeIndex.
 func (g *Graph) Node(nidx NodeIndex) *Node {
 	if node := g.nodeSameInstance(nidx); node != nil {
 		return node
@@ -48,6 +54,7 @@ func (g *Graph) nodeSameInstance(nidx NodeIndex) *Node {
 	}
 }
 
+// Children returns the children of a node.
 func (g *Graph) Children(nidx NodeIndex) []NodeIndex {
 	var children []NodeIndex
 	if g.parent != nil {
@@ -59,6 +66,7 @@ func (g *Graph) Children(nidx NodeIndex) []NodeIndex {
 	return children
 }
 
+// Edge returns the Edge associated with an EdgeIndex.
 func (g *Graph) Edge(eidx EdgeIndex) *Edge {
 	if edge, ok := g.edges[eidx]; ok {
 		return edge
@@ -67,6 +75,7 @@ func (g *Graph) Edge(eidx EdgeIndex) *Edge {
 	}
 }
 
+// Nodes returns the nodes linked by an edge.
 func (g *Graph) Nodes(eidx EdgeIndex) [2][]NodeIndex {
 	var nodes [2][]NodeIndex
 	if g.parent != nil {
@@ -79,6 +88,9 @@ func (g *Graph) Nodes(eidx EdgeIndex) [2][]NodeIndex {
 	return nodes
 }
 
+// Add creates a new node.
+// The node has to have a parent and it may inherit edges that the parent has. Each edge may only be inherited once.
+// The node will lie on the layer directly under the parent.
 func (g *Graph) Add(parent NodeIndex, edges []EdgeIndex) (NodeIndex, error) {
 	if g.Node(parent) == nil {
 		return NodeIndex{}, fmt.Errorf("%w: parent node %v doesn't exist", ErrIllegalAction, parent)
@@ -157,6 +169,8 @@ func (g *Graph) findNodeInEdges(nidx NodeIndex, eidx EdgeIndex) int {
 	}
 }
 
+// Link creates an edge between two nodes.
+// They must have the same parent and not be linked, already.
 func (g *Graph) Link(a, b NodeIndex) (EdgeIndex, error) {
 	if nodeA, nodeB := g.nodeSameInstance(a), g.nodeSameInstance(b); nodeA == nil || nodeB == nil {
 		return -1, fmt.Errorf("%w: nodes must be created in the same graph as the edge", ErrIllegalAction)
