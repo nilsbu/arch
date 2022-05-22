@@ -374,3 +374,5 @@ func TestAddWithFalseEdge(t *testing.T) {
 		t.Error("error must be 'ErrIllegalAction'")
 	}
 }
+
+// TODO Ensure that each edge is only inherited once.
