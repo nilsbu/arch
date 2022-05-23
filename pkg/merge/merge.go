@@ -15,7 +15,7 @@ func Build(bp blueprint.Blueprint) (*graph.Graph, error) {
 	r := &resolver{
 		name: "@",
 		keys: map[string][]string{
-			"R": {},
+			"1": {"a"},
 		}}
 
 	if choices, err := calcChoices(bp, "Root", r); err != nil {
@@ -32,7 +32,7 @@ func Build(bp blueprint.Blueprint) (*graph.Graph, error) {
 
 func parse(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *resolver) error {
 	if choice.bp != nil {
-		node := g.Node(graph.NodeIndex{})
+		node := g.Node(nidx)
 		node.Properties["name"] = choice.bp.Values(r.name)[0]
 		return nil
 	} else if err := parse(g, nidx, choice.children[0], r); err != nil {
