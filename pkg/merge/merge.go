@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/nilsbu/arch/pkg/blueprint"
+	"github.com/nilsbu/arch/pkg/check"
 	"github.com/nilsbu/arch/pkg/graph"
 )
 
@@ -11,7 +12,9 @@ import (
 
 var ErrInvalidBlueprint = errors.New("invalid blueprint")
 
-func Build(bp blueprint.Blueprint) (*graph.Graph, error) {
+var ErrNoSolution = errors.New("no solution found")
+
+func Build(bp blueprint.Blueprint, check check.Check) (*graph.Graph, error) {
 	r := &resolver{
 		name: "@",
 		keys: map[string][]string{
@@ -21,12 +24,18 @@ func Build(bp blueprint.Blueprint) (*graph.Graph, error) {
 	if choices, err := calcChoices(bp, "Root", r); err != nil {
 		return nil, err
 	} else {
-		g := graph.New(nil)
-		if err := parse(g, graph.NodeIndex{}, choices.get(0), r); err != nil {
-			return nil, err
-		} else {
-			return g, nil
+		for i := 0; i < choices.n(); i++ {
+			g := graph.New(nil)
+			if err := parse(g, graph.NodeIndex{}, choices.get(i), r); err != nil {
+				return nil, err
+			} else if ok, err := check.Match([]*graph.Graph{g}); err != nil {
+				return nil, err
+			} else if ok {
+				return g, nil
+			}
 		}
+
+		return nil, ErrNoSolution
 	}
 }
 
