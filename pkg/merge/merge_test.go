@@ -36,6 +36,31 @@ func TestBuild(t *testing.T) {
 			},
 			nil,
 		},
+		{
+			"root references other property",
+			`{"Root":"X","X":{"@":"R"}}`,
+			func() *graph.Graph {
+				g := graph.New(nil)
+				node := g.Node(graph.NodeIndex{})
+				node.Properties["name"] = "R"
+				return g
+			},
+			nil,
+		},
+		{
+			"root has child",
+			`{"Root":{"@":"1","a":{"@":"R"}}}`,
+			func() *graph.Graph {
+				g := graph.New(nil)
+				node := g.Node(graph.NodeIndex{})
+				node.Properties["name"] = "1"
+				nidx, _ := g.Add(graph.NodeIndex{}, nil)
+				node = g.Node(nidx)
+				node.Properties["name"] = "R"
+				return g
+			},
+			nil,
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			if bp, err := blueprint.Parse([]byte(c.blueprint)); err != nil {

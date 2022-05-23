@@ -9,8 +9,9 @@ import (
 
 func TestChoices(t *testing.T) {
 	type out struct {
+		c []*out
+		n string
 		// keys []string
-		out []string
 	}
 
 	stdResolver := &resolver{"@", map[string][]string{
@@ -25,7 +26,7 @@ func TestChoices(t *testing.T) {
 		blueprint string
 		root      string
 		resolver  *resolver
-		outs      []out
+		outs      []*out
 		err       error
 	}{
 		{
@@ -33,9 +34,7 @@ func TestChoices(t *testing.T) {
 			`{}`,
 			"Root",
 			stdResolver,
-			[]out{{
-				[]string{"a"},
-			}},
+			nil,
 			ErrInvalidBlueprint,
 		},
 		{
@@ -43,9 +42,7 @@ func TestChoices(t *testing.T) {
 			`{"Root":{"@":"a"}}`,
 			"Root",
 			stdResolver,
-			[]out{{
-				[]string{"a"},
-			}},
+			[]*out{{c: []*out{{n: "a"}}}},
 			nil,
 		},
 		{
@@ -53,11 +50,10 @@ func TestChoices(t *testing.T) {
 			`{"Root":[{"@":"a"}, {"@":"b"}]}`,
 			"Root",
 			stdResolver,
-			[]out{{
-				[]string{"a"},
-			}, {
-				[]string{"b"},
-			}},
+			[]*out{
+				{c: []*out{{n: "a"}}},
+				{c: []*out{{n: "b"}}},
+			},
 			nil,
 		},
 		{
@@ -65,9 +61,7 @@ func TestChoices(t *testing.T) {
 			`{"Root":"Other","Other":{"@":"a"}}`,
 			"Root",
 			stdResolver,
-			[]out{{
-				[]string{"a"},
-			}},
+			[]*out{{c: []*out{{c: []*out{{n: "a"}}}}}},
 			nil,
 		},
 		{
@@ -75,31 +69,36 @@ func TestChoices(t *testing.T) {
 			`{"Root":{"@":"T","1":{"@":"a"},"2":[{"@":"a"},{"@":"b"}]}}`,
 			"Root",
 			stdResolver,
-			[]out{{
-				[]string{"T", "a", "a"},
-			}, {
-				[]string{"T", "a", "b"},
-			}},
+			[]*out{
+				{c: []*out{{n: "T"}, {c: []*out{{n: "a"}}}, {c: []*out{{n: "a"}, {n: "b"}}}}},
+			},
 			nil,
 		},
 		{
-			"more complex scenario",
+			"more children",
 			`{"R":["O","P"],"O":{"@":"Q","3":{"@":"a"}},"P":[{"@":"a"},{"@":"T","1":[{"@":"a"},{"@":"b"}],"2":[{"@":"a"},{"@":"b"}]}]}`,
 			"R",
 			stdResolver,
-			[]out{{
-				[]string{"Q", "a"},
-			}, {
-				[]string{"a"},
-			}, {
-				[]string{"T", "a", "a"},
-			}, {
-				[]string{"T", "b", "a"},
-			}, {
-				[]string{"T", "a", "b"},
-			}, {
-				[]string{"T", "b", "b"},
-			}},
+			[]*out{
+				{c: []*out{{c: []*out{{n: "Q"}, {c: []*out{{n: "a"}}}}}}},
+				{c: []*out{{c: []*out{{n: "a"}}}}},
+				{c: []*out{{c: []*out{{n: "T"}, {c: []*out{{n: "a"}, {n: "b"}}}, {c: []*out{{n: "a"}, {n: "b"}}}}}}},
+			},
+			nil,
+		},
+		{
+			"options in parameters",
+			`{"R":["O","P"],"O":{"@":"Q","3":{"@":"a"}},"P":[{"@":"a"},{"@":"T","1":"P1","P1":[{"@":"a"},{"@":"b"}],"2":"P2","P2":[{"@":"a"},{"@":"b"}]}]}`,
+			"R",
+			stdResolver,
+			[]*out{
+				{c: []*out{{c: []*out{{n: "Q"}, {c: []*out{{n: "a"}}}}}}},
+				{c: []*out{{c: []*out{{n: "a"}}}}},
+				{c: []*out{{c: []*out{{n: "T"}, {c: []*out{{c: []*out{{n: "a"}}}}}, {c: []*out{{c: []*out{{n: "a"}}}}}}}}},
+				{c: []*out{{c: []*out{{n: "T"}, {c: []*out{{c: []*out{{n: "b"}}}}}, {c: []*out{{c: []*out{{n: "a"}}}}}}}}},
+				{c: []*out{{c: []*out{{n: "T"}, {c: []*out{{c: []*out{{n: "a"}}}}}, {c: []*out{{c: []*out{{n: "b"}}}}}}}}},
+				{c: []*out{{c: []*out{{n: "T"}, {c: []*out{{c: []*out{{n: "b"}}}}}, {c: []*out{{c: []*out{{n: "b"}}}}}}}}},
+			},
 			nil,
 		},
 		// TODO test errors
@@ -115,16 +114,39 @@ func TestChoices(t *testing.T) {
 				} else if !errors.Is(err, c.err) {
 					t.Error("wrong type of error")
 				} else if err == nil {
-					for i, out := range c.outs {
-						outBp := choices.get(i)
-						if len(out.out) != len(outBp) {
-							t.Fatalf("expected %v blueprints but got %v", len(out.out), len(outBp))
-						}
-						for j := range out.out {
-							if out.out[j] != outBp[j].Values("@")[0] {
-								t.Errorf("value %v, %v doesn't match: expect '%v', actual '%v'",
-									i, j, out.out[j], outBp[j].Values("@")[0])
+					n := choices.n()
+					if len(c.outs) < n {
+						t.Errorf("outputs < choices.n(): %v vs. %v", len(c.outs), n)
+					} else if len(c.outs) > n {
+						t.Fatalf("outputs > choices.n(): %v vs. %v", len(c.outs), n)
+					}
+
+					for i, o := range c.outs {
+						outBps := []*bpNode{choices.get(i)}
+						outs := []*out{o}
+						i := 0
+						for len(outBps) > 0 {
+							outBp := outBps[0]
+							o := outs[0]
+							if o.n != "" && outBp.bp == nil {
+								t.Error("expected block but none ocurred")
+							} else if o.n == "" && outBp.bp != nil {
+								t.Error("expected no block but one ocurred")
+							} else if o.n != "" && o.n != outBp.bp.Values("@")[0] {
+								t.Errorf("value %v doesn't match: expect '%v', actual '%v'",
+									i, o.n, outBp.bp.Values("@")[0])
 							}
+
+							outBps = append(outBps, outBp.children...)
+							outs = append(outs, o.c...)
+
+							if len(outBps) != len(outs) {
+								t.Fatalf("step %v, '%v': expected %v children but got %v",
+									i, o.n, len(o.c), len(outBp.children))
+							}
+							outBps = outBps[1:]
+							outs = outs[1:]
+							i++
 						}
 					}
 				}
