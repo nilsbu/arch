@@ -2,8 +2,11 @@ package blueprint
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 )
+
+var ErrInvalidScript = errors.New("blueprint script is invalid")
 
 // TODO document
 type Blueprint interface {
@@ -27,7 +30,7 @@ func Parse(data []byte) (Blueprint, error) {
 	var raw map[string]interface{}
 	err := json.Unmarshal(data, &raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot parse JSON: %w", err)
 	}
 
 	return parseRaw(raw, nil)
@@ -76,7 +79,7 @@ func (b *block) parseValues(raw interface{}, k string, valueCounter *int) ([]str
 		}
 		return values, nil
 	default:
-		return nil, fmt.Errorf("'%v' is not valid type for a property", raw)
+		return nil, fmt.Errorf("%w: '%v' is not valid type for a property", ErrInvalidScript, raw)
 	}
 }
 
