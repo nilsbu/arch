@@ -71,8 +71,8 @@ func TestBuild(t *testing.T) {
 				t.Errorf("expected error but non ocurred")
 			} else if !errors.Is(err, c.err) {
 				t.Errorf("wrong type of error")
-			} else if !tg.AreEqual(c.graph(), graph) {
-				t.Error("graph is wrong")
+			} else if eq, ex := tg.AreEqual(c.graph(), graph); !eq {
+				t.Error("graph is wrong:", ex)
 			}
 		})
 	}

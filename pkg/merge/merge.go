@@ -38,7 +38,17 @@ func parse(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *resolver) er
 	} else if err := parse(g, nidx, choice.children[0], r); err != nil {
 		return err
 	} else {
-		// node :=
+		// each parameter has a child that may itself have multiple children
+		for _, child := range choice.children[1:] {
+			// child mustn't have a bp, so it's not checked here
+			for _, grandchild := range child.children {
+				if gcnidx, err := g.Add(nidx, nil); err != nil {
+					return err
+				} else if err := parse(g, gcnidx, grandchild, r); err != nil {
+					return nil
+				}
+			}
+		}
 		return nil
 	}
 }
