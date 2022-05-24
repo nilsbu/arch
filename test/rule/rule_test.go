@@ -28,7 +28,7 @@ func TestMockRuleNoPrep(t *testing.T) {
 		f    func(
 			g *graph.Graph,
 			nidx graph.NodeIndex,
-			children []graph.NodeIndex,
+			children map[string][]graph.NodeIndex,
 			bp blueprint.Blueprint,
 		) error
 		ok   bool
@@ -45,7 +45,7 @@ func TestMockRuleNoPrep(t *testing.T) {
 			func(
 				g *graph.Graph,
 				nidx graph.NodeIndex,
-				children []graph.NodeIndex,
+				children map[string][]graph.NodeIndex,
 				bp blueprint.Blueprint,
 			) error {
 				return errors.New("bah")
@@ -58,7 +58,7 @@ func TestMockRuleNoPrep(t *testing.T) {
 			func(
 				g *graph.Graph,
 				nidx graph.NodeIndex,
-				children []graph.NodeIndex,
+				children map[string][]graph.NodeIndex,
 				bp blueprint.Blueprint,
 			) error {
 				data = "booo"
@@ -79,7 +79,7 @@ func TestMockRuleNoPrep(t *testing.T) {
 			err := rm.PrepareGraph(
 				graph.New(nil),
 				graph.NodeIndex{},
-				[]graph.NodeIndex{},
+				map[string][]graph.NodeIndex{},
 				bp)
 
 			if c.ok && err != nil {

@@ -7,5 +7,10 @@ import (
 
 type Rule interface {
 	ChildParams() []string
-	PrepareGraph(g *graph.Graph, nidx graph.NodeIndex, children []graph.NodeIndex, bp blueprint.Blueprint) error
+	PrepareGraph(
+		g *graph.Graph,
+		nidx graph.NodeIndex,
+		children map[string][]graph.NodeIndex,
+		bp blueprint.Blueprint,
+	) error
 }

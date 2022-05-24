@@ -10,7 +10,7 @@ type RuleMock struct {
 	Prep   func(
 		g *graph.Graph,
 		nidx graph.NodeIndex,
-		children []graph.NodeIndex,
+		children map[string][]graph.NodeIndex,
 		bp blueprint.Blueprint,
 	) error
 }
@@ -20,7 +20,7 @@ func (r *RuleMock) ChildParams() []string {
 }
 
 func (r *RuleMock) PrepareGraph(
-	g *graph.Graph, nidx graph.NodeIndex, children []graph.NodeIndex, bp blueprint.Blueprint) error {
+	g *graph.Graph, nidx graph.NodeIndex, children map[string][]graph.NodeIndex, bp blueprint.Blueprint) error {
 	if r.Prep != nil {
 		return r.Prep(g, nidx, children, bp)
 	} else {

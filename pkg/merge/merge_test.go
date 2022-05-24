@@ -28,20 +28,46 @@ func getNodes(g *graph.Graph) []graph.NodeIndex {
 	return out
 }
 
+func with(r *merge.Resolver, add map[string]rule.Rule) *merge.Resolver {
+	out := &merge.Resolver{
+		Name: r.Name,
+		Keys: map[string]rule.Rule{},
+	}
+
+	for k, v := range r.Keys {
+		out.Keys[k] = v
+	}
+	for k, v := range add {
+		out.Keys[k] = v
+	}
+
+	return out
+}
+
 func TestBuild(t *testing.T) {
 	allOk := checker(func([]*graph.Graph) (bool, error) { return true, nil })
+
+	resolver := &merge.Resolver{
+		Name: "@",
+		Keys: map[string]rule.Rule{
+			"1": &tr.RuleMock{Params: []string{"a"}},
+			"R": &tr.RuleMock{},
+			"P": &tr.RuleMock{},
+		},
+	}
 
 	for _, c := range []struct {
 		name      string
 		blueprint string
 		check     check.Check
+		resolver  *merge.Resolver
 		graph     func() *graph.Graph
 		err       error
 	}{
 		{
 			"empty definition",
 			"{}",
-			allOk,
+			allOk, resolver,
 			func() *graph.Graph {
 				return nil
 			},
@@ -50,7 +76,7 @@ func TestBuild(t *testing.T) {
 		{
 			"only a single rule",
 			`{"Root":{"@":"R"}}`,
-			allOk,
+			allOk, resolver,
 			func() *graph.Graph {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
@@ -62,7 +88,7 @@ func TestBuild(t *testing.T) {
 		{
 			"root references other property",
 			`{"Root":"X","X":{"@":"R"}}`,
-			allOk,
+			allOk, resolver,
 			func() *graph.Graph {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
@@ -74,7 +100,7 @@ func TestBuild(t *testing.T) {
 		{
 			"root has child",
 			`{"Root":{"@":"1","a":{"@":"R"}}}`,
-			allOk,
+			allOk, resolver,
 			func() *graph.Graph {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
@@ -99,6 +125,7 @@ func TestBuild(t *testing.T) {
 				}
 				return true, nil
 			}),
+			resolver,
 			func() *graph.Graph {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
@@ -110,20 +137,40 @@ func TestBuild(t *testing.T) {
 			},
 			nil,
 		},
+		{
+			"set properties for self and child",
+			`{"Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":{"@":"P"}}]}`,
+			allOk,
+			with(resolver, map[string]rule.Rule{
+				"1": &tr.RuleMock{
+					Params: []string{"a"},
+					Prep: func(
+						g *graph.Graph, nidx graph.NodeIndex,
+						children map[string][]graph.NodeIndex, bp blueprint.Blueprint) error {
+
+						node := g.Node(nidx)
+						node.Properties["set"] = "meeee"
+						return nil
+					},
+				},
+			}),
+			func() *graph.Graph {
+				g := graph.New(nil)
+				node := g.Node(graph.NodeIndex{})
+				node.Properties["name"] = "1"
+				node.Properties["set"] = "meeee"
+				nidx, _ := g.Add(graph.NodeIndex{}, nil)
+				node = g.Node(nidx)
+				node.Properties["name"] = "R"
+				return g
+			},
+			nil,
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			r := &merge.Resolver{
-				Name: "@",
-				Keys: map[string]rule.Rule{
-					"1": &tr.RuleMock{Params: []string{"a"}},
-					"R": &tr.RuleMock{},
-					"P": &tr.RuleMock{},
-				},
-			}
-
 			if bp, err := blueprint.Parse([]byte(c.blueprint)); err != nil {
 				t.Fatalf("unexpected error: %v", err)
-			} else if graph, err := merge.Build(bp, c.check, r); err != nil && c.err == nil {
+			} else if graph, err := merge.Build(bp, c.check, c.resolver); err != nil && c.err == nil {
 				t.Errorf("unexpected error: %v", err)
 			} else if err == nil && c.err != nil {
 				t.Errorf("expected error but non ocurred")

@@ -5,23 +5,9 @@ import (
 	"testing"
 
 	"github.com/nilsbu/arch/pkg/blueprint"
-	"github.com/nilsbu/arch/pkg/graph"
 	"github.com/nilsbu/arch/pkg/rule"
 	tr "github.com/nilsbu/arch/test/rule"
 )
-
-type ruleMock struct {
-	childParams []string
-}
-
-func (r *ruleMock) ChildParams() []string {
-	return r.childParams
-}
-
-func (r *ruleMock) PrepareGraph(
-	g *graph.Graph, nidx graph.NodeIndex, children []graph.NodeIndex, bp blueprint.Blueprint) error {
-	return nil
-}
 
 func TestChoices(t *testing.T) {
 	type out struct {

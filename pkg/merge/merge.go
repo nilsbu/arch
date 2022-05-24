@@ -41,15 +41,29 @@ func parse(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolver) er
 	} else if err := parse(g, nidx, choice.children[0], r); err != nil {
 		return err
 	} else {
+		grandchildren := map[string][]graph.NodeIndex{}
 		// each parameter has a child that may itself have multiple children
-		for _, child := range choice.children[1:] {
-			// child mustn't have a bp, so it's not checked here
-			for _, grandchild := range child.children {
+		names := r.Keys[g.Node(nidx).Properties["name"].(string)].ChildParams()
+		for i, child := range choice.children[1:] {
+			for range child.children {
 				if gcnidx, err := g.Add(nidx, nil); err != nil {
 					return err
-				} else if err := parse(g, gcnidx, grandchild, r); err != nil {
-					return nil
+				} else {
+					grandchildren[names[i]] = append(grandchildren[names[i]], gcnidx)
 				}
+			}
+
+			rule := r.Keys[g.Node(nidx).Properties["name"].(string)]
+			rule.PrepareGraph(g, nidx, grandchildren, nil)
+
+			i := 0
+			for _, children := range grandchildren {
+				for _, child := range children {
+					if err := parse(g, child, choice.children[i+1], r); err != nil {
+						return nil
+					}
+				}
+				i++
 			}
 		}
 		return nil
