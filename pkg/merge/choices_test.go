@@ -5,7 +5,23 @@ import (
 	"testing"
 
 	"github.com/nilsbu/arch/pkg/blueprint"
+	"github.com/nilsbu/arch/pkg/graph"
+	"github.com/nilsbu/arch/pkg/rule"
+	tr "github.com/nilsbu/arch/test/rule"
 )
+
+type ruleMock struct {
+	childParams []string
+}
+
+func (r *ruleMock) ChildParams() []string {
+	return r.childParams
+}
+
+func (r *ruleMock) PrepareGraph(
+	g *graph.Graph, nidx graph.NodeIndex, children []graph.NodeIndex, bp blueprint.Blueprint) error {
+	return nil
+}
 
 func TestChoices(t *testing.T) {
 	type out struct {
@@ -14,18 +30,18 @@ func TestChoices(t *testing.T) {
 		// keys []string
 	}
 
-	stdResolver := &resolver{"@", map[string][]string{
-		"a": {},
-		"b": {},
-		"T": {"1", "2"},
-		"Q": {"3"},
+	stdResolver := &Resolver{"@", map[string]rule.Rule{
+		"a": &tr.RuleMock{Params: []string{}},
+		"b": &tr.RuleMock{Params: []string{}},
+		"T": &tr.RuleMock{Params: []string{"1", "2"}},
+		"Q": &tr.RuleMock{Params: []string{"3"}},
 	}}
 
 	for _, c := range []struct {
 		name      string
 		blueprint string
 		root      string
-		resolver  *resolver
+		resolver  *Resolver
 		outs      []*out
 		err       error
 	}{

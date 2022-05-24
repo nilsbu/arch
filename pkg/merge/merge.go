@@ -14,13 +14,7 @@ var ErrInvalidBlueprint = errors.New("invalid blueprint")
 
 var ErrNoSolution = errors.New("no solution found")
 
-func Build(bp blueprint.Blueprint, check check.Check) (*graph.Graph, error) {
-	r := &resolver{
-		name: "@",
-		keys: map[string][]string{
-			"1": {"a"},
-		}}
-
+func Build(bp blueprint.Blueprint, check check.Check, r *Resolver) (*graph.Graph, error) {
 	if choices, err := calcChoices(bp, "Root", r); err != nil {
 		return nil, err
 	} else {
@@ -39,10 +33,10 @@ func Build(bp blueprint.Blueprint, check check.Check) (*graph.Graph, error) {
 	}
 }
 
-func parse(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *resolver) error {
+func parse(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolver) error {
 	if choice.bp != nil {
 		node := g.Node(nidx)
-		node.Properties["name"] = choice.bp.Values(r.name)[0]
+		node.Properties["name"] = choice.bp.Values(r.Name)[0]
 		return nil
 	} else if err := parse(g, nidx, choice.children[0], r); err != nil {
 		return err

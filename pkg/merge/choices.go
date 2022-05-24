@@ -14,7 +14,7 @@ type choices struct {
 
 type group []*choices
 
-func calcChoices(bp blueprint.Blueprint, property string, resolver *resolver) (*choices, error) {
+func calcChoices(bp blueprint.Blueprint, property string, resolver *Resolver) (*choices, error) {
 	result := &choices{
 		values:    bp.Values(property),
 		blueprint: bp,
@@ -44,14 +44,18 @@ func calcChoices(bp blueprint.Blueprint, property string, resolver *resolver) (*
 	return result, nil
 }
 
-func getGroup(bp blueprint.Blueprint, resolver *resolver) (group, error) {
-	if name := bp.Values(resolver.name); len(name) != 1 {
+func getGroup(bp blueprint.Blueprint, resolver *Resolver) (group, error) {
+	if name := bp.Values(resolver.Name); len(name) != 1 {
 		return nil, fmt.Errorf("%w: ", ErrInvalidBlueprint)
 	} else {
 		grp := []*choices{{
 			blueprint: bp,
 		}}
-		for _, param := range resolver.keys[name[0]] {
+		rule := resolver.Keys[name[0]]
+		if rule == nil {
+			return nil, ErrUnknownKey
+		}
+		for _, param := range rule.ChildParams() {
 			if choice, err := calcConjunction(bp, param, resolver); err != nil {
 				return nil, err
 			} else {
@@ -62,7 +66,7 @@ func getGroup(bp blueprint.Blueprint, resolver *resolver) (group, error) {
 	}
 }
 
-func calcConjunction(bp blueprint.Blueprint, property string, resolver *resolver) (*choices, error) {
+func calcConjunction(bp blueprint.Blueprint, property string, resolver *Resolver) (*choices, error) {
 	result := &choices{
 		blueprint: bp,
 	}

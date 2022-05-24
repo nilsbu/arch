@@ -8,7 +8,9 @@ import (
 	"github.com/nilsbu/arch/pkg/check"
 	"github.com/nilsbu/arch/pkg/graph"
 	"github.com/nilsbu/arch/pkg/merge"
+	"github.com/nilsbu/arch/pkg/rule"
 	tg "github.com/nilsbu/arch/test/graph"
+	tr "github.com/nilsbu/arch/test/rule"
 )
 
 type checker func([]*graph.Graph) (bool, error)
@@ -110,9 +112,18 @@ func TestBuild(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
+			r := &merge.Resolver{
+				Name: "@",
+				Keys: map[string]rule.Rule{
+					"1": &tr.RuleMock{Params: []string{"a"}},
+					"R": &tr.RuleMock{},
+					"P": &tr.RuleMock{},
+				},
+			}
+
 			if bp, err := blueprint.Parse([]byte(c.blueprint)); err != nil {
 				t.Fatalf("unexpected error: %v", err)
-			} else if graph, err := merge.Build(bp, c.check); err != nil && c.err == nil {
+			} else if graph, err := merge.Build(bp, c.check, r); err != nil && c.err == nil {
 				t.Errorf("unexpected error: %v", err)
 			} else if err == nil && c.err != nil {
 				t.Errorf("expected error but non ocurred")
