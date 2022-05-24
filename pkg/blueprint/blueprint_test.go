@@ -102,6 +102,11 @@ func TestBlueprint(t *testing.T) {
 			`{"k":{"kk":32}}`,
 			false, nil, nil, nil,
 		},
+		{
+			"error in list",
+			`{"k":["kk",32]}`,
+			false, nil, nil, nil,
+		},
 		// now let's test access semantics in more detail
 		{
 			"cannot access child properties",
@@ -246,4 +251,22 @@ func TestBlueprintSibling(t *testing.T) {
 	if !reflect.DeepEqual([]string{"b"}, value) {
 		t.Errorf("value 'a' doesn't match: expect [b] but got %v", value)
 	}
+}
+
+func TestBlueprintFalseProperty(t *testing.T) {
+	bp, _ := blueprint.Parse([]byte("{}"))
+	if bp.Values("IDontExist") != nil {
+		t.Errorf("Values() shouldn't have returned %v",
+			bp.Values("IDontExist"))
+	}
+
+}
+
+func TestBlueprintFalseChild(t *testing.T) {
+	bp, _ := blueprint.Parse([]byte("{}"))
+	if bp.Child("*IDontExist") != nil {
+		t.Errorf("Child() shouldn't have returned %v",
+			bp.Child("*IDontExist"))
+	}
+
 }

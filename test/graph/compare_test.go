@@ -110,6 +110,23 @@ func TestCompare(t *testing.T) {
 			false, "edges of [1 0] are disjunct in [0] vs. []",
 		},
 		{
+			"only second has link",
+			func() *graph.Graph {
+				g := graph.New(nil)
+				g.Add(graph.NodeIndex{0, 0}, nil)
+				g.Add(graph.NodeIndex{0, 0}, nil)
+				return g
+			},
+			func() *graph.Graph {
+				g := graph.New(nil)
+				n0, _ := g.Add(graph.NodeIndex{0, 0}, nil)
+				n1, _ := g.Add(graph.NodeIndex{0, 0}, nil)
+				g.Link(n0, n1)
+				return g
+			},
+			false, "edges of [1 0] are disjunct in [] vs. [0]",
+		},
+		{
 			"link in different direction",
 			func() *graph.Graph {
 				g := graph.New(nil)
