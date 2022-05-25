@@ -13,7 +13,6 @@ func TestChoices(t *testing.T) {
 	type out struct {
 		c []*out
 		n string
-		// keys []string
 	}
 
 	stdResolver := &Resolver{"@", map[string]rule.Rule{

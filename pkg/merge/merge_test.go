@@ -150,6 +150,8 @@ func TestBuild(t *testing.T) {
 
 						node := g.Node(nidx)
 						node.Properties["set"] = "meeee"
+						child := g.Node(children["a"][0])
+						child.Properties["asdf"] = "qwerty"
 						return nil
 					},
 				},
@@ -162,6 +164,7 @@ func TestBuild(t *testing.T) {
 				nidx, _ := g.Add(graph.NodeIndex{}, nil)
 				node = g.Node(nidx)
 				node.Properties["name"] = "R"
+				node.Properties["asdf"] = "qwerty"
 				return g
 			},
 			nil,

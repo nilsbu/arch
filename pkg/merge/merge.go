@@ -38,32 +38,40 @@ func parse(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolver) er
 		node := g.Node(nidx)
 		node.Properties["name"] = choice.bp.Values(r.Name)[0]
 		return nil
-	} else if err := parse(g, nidx, choice.children[0], r); err != nil {
+	} else if choice.children[0].bp == nil {
+		return parse(g, nidx, choice.children[0], r)
+	} else {
+		return parseBlock(g, nidx, choice, r)
+	}
+}
+
+func parseBlock(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolver) error {
+	if err := parse(g, nidx, choice.children[0], r); err != nil {
 		return err
 	} else {
-		grandchildren := map[string][]graph.NodeIndex{}
-		// each parameter has a child that may itself have multiple children
-		names := r.Keys[g.Node(nidx).Properties["name"].(string)].ChildParams()
+		nidxs := map[string][]graph.NodeIndex{}
+		namedChoices := map[string]*bpNode{}
+		rule := r.Keys[g.Node(nidx).Properties["name"].(string)]
+		names := rule.ChildParams()
 		for i, child := range choice.children[1:] {
 			for range child.children {
 				if gcnidx, err := g.Add(nidx, nil); err != nil {
 					return err
 				} else {
-					grandchildren[names[i]] = append(grandchildren[names[i]], gcnidx)
+					name := names[i]
+					namedChoices[name] = child
+					nidxs[name] = append(nidxs[name], gcnidx)
 				}
 			}
+		}
 
-			rule := r.Keys[g.Node(nidx).Properties["name"].(string)]
-			rule.PrepareGraph(g, nidx, grandchildren, nil)
+		rule.PrepareGraph(g, nidx, nidxs, nil)
 
-			i := 0
-			for _, children := range grandchildren {
-				for _, child := range children {
-					if err := parse(g, child, choice.children[i+1], r); err != nil {
-						return nil
-					}
+		for name, children := range nidxs {
+			for _, child := range children {
+				if err := parse(g, child, namedChoices[name], r); err != nil {
+					return err
 				}
-				i++
 			}
 		}
 		return nil
