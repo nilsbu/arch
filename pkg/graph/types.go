@@ -21,7 +21,7 @@ type Graph struct {
 
 	nodes     [][]*Node
 	children  map[NodeIndex][]NodeIndex
-	edges     map[EdgeIndex]*Edge
+	edges     []*Edge
 	edgeNodes map[EdgeIndex]*edgeNodes
 }
 

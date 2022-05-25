@@ -21,7 +21,7 @@ func New(parent *Graph) *Graph {
 		return &Graph{
 			nodes:     [][]*Node{{{Properties: Properties{}, Parent: NoParent}}},
 			children:  map[NodeIndex][]NodeIndex{},
-			edges:     map[EdgeIndex]*Edge{},
+			edges:     []*Edge{},
 			edgeNodes: map[EdgeIndex]*edgeNodes{},
 		}
 	} else {
@@ -29,7 +29,7 @@ func New(parent *Graph) *Graph {
 			parent:    parent,
 			nodes:     [][]*Node{},
 			children:  map[NodeIndex][]NodeIndex{},
-			edges:     map[EdgeIndex]*Edge{},
+			edges:     []*Edge{},
 			edgeNodes: map[EdgeIndex]*edgeNodes{},
 		}
 	}
@@ -68,10 +68,23 @@ func (g *Graph) Children(nidx NodeIndex) []NodeIndex {
 
 // Edge returns the Edge associated with an EdgeIndex.
 func (g *Graph) Edge(eidx EdgeIndex) *Edge {
-	if edge, ok := g.edges[eidx]; ok {
-		return edge
+	if g.parent == nil {
+		return g.edges[eidx]
 	} else {
-		return g.parent.Edge(eidx)
+		offset := g.parent.countEdges()
+		if int(eidx) < offset {
+			return g.parent.Edge(eidx)
+		} else {
+			return g.edges[int(eidx)-offset]
+		}
+	}
+}
+
+func (g *Graph) countEdges() int {
+	if g.parent == nil {
+		return len(g.edges)
+	} else {
+		return len(g.edges) + g.parent.countEdges()
 	}
 }
 
@@ -179,12 +192,12 @@ func (g *Graph) Link(a, b NodeIndex) (EdgeIndex, error) {
 	} else if g.linkExists(a, b) {
 		return -1, fmt.Errorf("%w: nodes are already linked", ErrIllegalAction)
 	} else {
-		eidx := EdgeIndex(len(g.edges))
+		eidx := EdgeIndex(g.countEdges())
 
 		edge := &Edge{
 			Properties: Properties{},
 		}
-		g.edges[eidx] = edge
+		g.edges = append(g.edges, edge)
 
 		g.edgeNodes[eidx] = &edgeNodes{
 			Nodes: [2][]NodeIndex{{a}, {b}},

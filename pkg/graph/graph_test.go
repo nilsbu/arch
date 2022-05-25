@@ -256,6 +256,48 @@ func TestGraph(t *testing.T) {
 				0: {{{1, 0}}, {{1, 1}, {2, 0}}},
 			},
 		},
+		{
+			"edge index continuity",
+			func() *graph.Graph {
+				g := graph.New(nil)
+				n0, _ := g.Add(graph.NodeIndex{}, nil)
+				n1, _ := g.Add(graph.NodeIndex{}, nil)
+				g.Link(n0, n1)
+				g = graph.New(g)
+				n00, _ := g.Add(n0, nil)
+				n01, _ := g.Add(n0, nil)
+				g.Link(n00, n01)
+				g = graph.New(g)
+				n010, _ := g.Add(n01, nil)
+				n011, _ := g.Add(n01, nil)
+				g.Link(n010, n011)
+				return g
+			},
+			map[graph.NodeIndex]*graph.Node{
+				{0, 0}: {Properties: graph.Properties{}, Parent: graph.NoParent},
+				{1, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
+				{1, 1}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
+				{2, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{1, 0}, Edges: []graph.EdgeIndex{1}},
+				{2, 1}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{1, 0}, Edges: []graph.EdgeIndex{1}},
+				{3, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{2, 1}, Edges: []graph.EdgeIndex{2}},
+				{3, 1}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{2, 1}, Edges: []graph.EdgeIndex{2}},
+			},
+			map[graph.NodeIndex][]graph.NodeIndex{
+				{0, 0}: {{1, 0}, {1, 1}},
+				{1, 0}: {{2, 0}, {2, 1}},
+				{2, 1}: {{3, 0}, {3, 1}},
+			},
+			map[graph.EdgeIndex]*graph.Edge{
+				0: {Properties: graph.Properties{}},
+				1: {Properties: graph.Properties{}},
+				2: {Properties: graph.Properties{}},
+			},
+			map[graph.EdgeIndex][2][]graph.NodeIndex{
+				0: {{{1, 0}}, {{1, 1}}},
+				1: {{{2, 0}}, {{2, 1}}},
+				2: {{{3, 0}}, {{3, 1}}},
+			},
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			g := c.setup()
