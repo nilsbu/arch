@@ -1,4 +1,4 @@
-package check
+package merge
 
 import "github.com/nilsbu/arch/pkg/graph"
 

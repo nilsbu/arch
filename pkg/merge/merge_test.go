@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/nilsbu/arch/pkg/blueprint"
-	"github.com/nilsbu/arch/pkg/check"
 	"github.com/nilsbu/arch/pkg/graph"
 	"github.com/nilsbu/arch/pkg/merge"
 	"github.com/nilsbu/arch/pkg/rule"
@@ -60,7 +59,7 @@ func TestBuild(t *testing.T) {
 	for _, c := range []struct {
 		name      string
 		blueprint string
-		check     check.Check
+		check     merge.Check
 		resolver  *merge.Resolver
 		graph     func() *graph.Graph
 		err       error

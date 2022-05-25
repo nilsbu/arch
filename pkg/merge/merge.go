@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/nilsbu/arch/pkg/blueprint"
-	"github.com/nilsbu/arch/pkg/check"
 	"github.com/nilsbu/arch/pkg/graph"
 	"github.com/nilsbu/arch/pkg/rule"
 )
@@ -16,7 +15,7 @@ var ErrInvalidBlueprint = errors.New("invalid blueprint")
 
 var ErrNoSolution = errors.New("no solution found")
 
-func Build(bp blueprint.Blueprint, check check.Check, r *Resolver) (*graph.Graph, error) {
+func Build(bp blueprint.Blueprint, check Check, r *Resolver) (*graph.Graph, error) {
 	if choices, err := calcChoices(bp, "Root", r); err != nil {
 		return nil, err
 	} else {
