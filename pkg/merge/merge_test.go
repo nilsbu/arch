@@ -2,6 +2,7 @@ package merge_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/nilsbu/arch/pkg/blueprint"
@@ -169,6 +170,62 @@ func TestBuild(t *testing.T) {
 			},
 			nil,
 		},
+		{
+			"unrecoverable error in PrepareGraph() causes failure",
+			`{"Root":{"@":"1","a":{"@":"R"}}}`,
+			allOk,
+			with(resolver, map[string]rule.Rule{
+				"1": &tr.RuleMock{
+					Params: []string{"a"},
+					Prep: func(
+						g *graph.Graph, nidx graph.NodeIndex,
+						children map[string][]graph.NodeIndex, bp blueprint.Blueprint) error {
+
+						return fmt.Errorf("%w", rule.ErrPreparation)
+					},
+				},
+			}),
+			func() *graph.Graph {
+				return nil
+			},
+			rule.ErrPreparation,
+		},
+		{
+			"recoverable error in PrepareGraph() causes rejection of first option",
+			`{"Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":{"@":"P"}}]}`,
+			allOk,
+			with(resolver, map[string]rule.Rule{
+				"1": &tr.RuleMock{
+					Params: []string{"a"},
+					Prep: func() func(
+						g *graph.Graph, nidx graph.NodeIndex,
+						children map[string][]graph.NodeIndex, bp blueprint.Blueprint) error {
+						count := 0
+						return func(
+							g *graph.Graph, nidx graph.NodeIndex,
+							children map[string][]graph.NodeIndex, bp blueprint.Blueprint) error {
+
+							count++
+							if count == 1 {
+								return fmt.Errorf("%w", rule.ErrInvalidGraph)
+							} else {
+								return nil
+							}
+						}
+					}(),
+				},
+			}),
+			func() *graph.Graph {
+				g := graph.New(nil)
+				node := g.Node(graph.NodeIndex{})
+				node.Properties["name"] = "1"
+				nidx, _ := g.Add(graph.NodeIndex{}, nil)
+				node = g.Node(nidx)
+				node.Properties["name"] = "P"
+				return g
+			},
+			nil,
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			if bp, err := blueprint.Parse([]byte(c.blueprint)); err != nil {
@@ -178,7 +235,7 @@ func TestBuild(t *testing.T) {
 			} else if err == nil && c.err != nil {
 				t.Errorf("expected error but non ocurred")
 			} else if !errors.Is(err, c.err) {
-				t.Errorf("wrong type of error")
+				t.Errorf("wrong type of error\nexpect: %v\nactual: %v", c.err, err)
 			} else if eq, ex := tg.AreEqual(c.graph(), graph); !eq {
 				t.Error("graph is wrong:", ex)
 			}

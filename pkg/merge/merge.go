@@ -2,10 +2,12 @@ package merge
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/nilsbu/arch/pkg/blueprint"
 	"github.com/nilsbu/arch/pkg/check"
 	"github.com/nilsbu/arch/pkg/graph"
+	"github.com/nilsbu/arch/pkg/rule"
 )
 
 // TODO find a package (name) that is better
@@ -20,7 +22,9 @@ func Build(bp blueprint.Blueprint, check check.Check, r *Resolver) (*graph.Graph
 	} else {
 		for i := 0; i < choices.n(); i++ {
 			g := graph.New(nil)
-			if err := parse(g, graph.NodeIndex{}, choices.get(i), r); err != nil {
+			if err := parse(g, graph.NodeIndex{}, choices.get(i), r); errors.Is(err, rule.ErrInvalidGraph) {
+				continue
+			} else if err != nil {
 				return nil, err
 			} else if ok, err := check.Match([]*graph.Graph{g}); err != nil {
 				return nil, err
@@ -51,7 +55,8 @@ func parseBlock(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolve
 	} else {
 		nidxs := map[string][]graph.NodeIndex{}
 		namedChoices := map[string]*bpNode{}
-		rule := r.Keys[g.Node(nidx).Properties["name"].(string)]
+		name := g.Node(nidx).Properties["name"].(string)
+		rule := r.Keys[name]
 		names := rule.ChildParams()
 		for i, child := range choice.children[1:] {
 			for range child.children {
@@ -65,7 +70,9 @@ func parseBlock(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolve
 			}
 		}
 
-		rule.PrepareGraph(g, nidx, nidxs, nil)
+		if err := rule.PrepareGraph(g, nidx, nidxs, nil); err != nil {
+			return fmt.Errorf("couldn't create node of type '%v': %w", name, err)
+		}
 
 		for name, children := range nidxs {
 			for _, child := range children {
