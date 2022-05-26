@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/nilsbu/arch/pkg/blueprint"
+	"github.com/nilsbu/arch/pkg/csp"
 	"github.com/nilsbu/arch/pkg/graph"
 	"github.com/nilsbu/arch/pkg/merge"
 	"github.com/nilsbu/arch/pkg/rule"
@@ -57,16 +58,16 @@ func TestBuild(t *testing.T) {
 	}
 
 	for _, c := range []struct {
-		name      string
-		blueprint string
-		check     merge.Check
-		resolver  *merge.Resolver
-		graph     func() *graph.Graph
-		err       error
+		name       string
+		blueprints []string
+		check      merge.Check
+		resolver   *merge.Resolver
+		graph      func() *graph.Graph
+		err        error
 	}{
 		{
 			"empty definition",
-			"{}",
+			[]string{"{}"},
 			allOk, resolver,
 			func() *graph.Graph {
 				return nil
@@ -75,7 +76,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			"only a single rule",
-			`{"Root":{"@":"R"}}`,
+			[]string{`{"Root":{"@":"R"}}`},
 			allOk, resolver,
 			func() *graph.Graph {
 				g := graph.New(nil)
@@ -87,7 +88,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			"root references other property",
-			`{"Root":"X","X":{"@":"R"}}`,
+			[]string{`{"Root":"X","X":{"@":"R"}}`},
 			allOk, resolver,
 			func() *graph.Graph {
 				g := graph.New(nil)
@@ -99,7 +100,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			"root has child",
-			`{"Root":{"@":"1","a":{"@":"R"}}}`,
+			[]string{`{"Root":{"@":"1","a":{"@":"R"}}}`},
 			allOk, resolver,
 			func() *graph.Graph {
 				g := graph.New(nil)
@@ -114,7 +115,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			"reject R in child",
-			`{"Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":{"@":"P"}}]}`,
+			[]string{`{"Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":{"@":"P"}}]}`},
 			checker(func(graphs []*graph.Graph) (bool, error) {
 				for _, g := range graphs {
 					for _, nidx := range getNodes(g) {
@@ -138,8 +139,30 @@ func TestBuild(t *testing.T) {
 			nil,
 		},
 		{
+			"check with centipede",
+			[]string{
+				`{"Root":[
+					{"@":"1","a":[{"@":"R"},{"@":"P"},{"@":"R"}]}, 
+					{"@":"1","a":{"@":"P"}}]}`,
+				`{"Root":[
+						{"@":"1","a":{"@":"P"}}]}`,
+			},
+			&csp.Centipede{},
+			resolver,
+			func() *graph.Graph {
+				g := graph.New(nil)
+				node := g.Node(graph.NodeIndex{})
+				node.Properties["name"] = "1"
+				nidx, _ := g.Add(graph.NodeIndex{}, nil)
+				node = g.Node(nidx)
+				node.Properties["name"] = "P"
+				return g
+			},
+			nil,
+		},
+		{
 			"set properties for self and child",
-			`{"Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":{"@":"P"}}]}`,
+			[]string{`{"Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":{"@":"P"}}]}`},
 			allOk,
 			with(resolver, map[string]rule.Rule{
 				"1": &tr.RuleMock{
@@ -171,7 +194,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			"unrecoverable error in PrepareGraph() causes failure",
-			`{"Root":{"@":"1","a":{"@":"R"}}}`,
+			[]string{`{"Root":{"@":"1","a":{"@":"R"}}}`},
 			allOk,
 			with(resolver, map[string]rule.Rule{
 				"1": &tr.RuleMock{
@@ -191,7 +214,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			"recoverable error in PrepareGraph() causes rejection of first option",
-			`{"Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":{"@":"P"}}]}`,
+			[]string{`{"Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":{"@":"P"}}]}`},
 			allOk,
 			with(resolver, map[string]rule.Rule{
 				"1": &tr.RuleMock{
@@ -227,9 +250,15 @@ func TestBuild(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			if bp, err := blueprint.Parse([]byte(c.blueprint)); err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			} else if graph, err := merge.Build(bp, c.check, c.resolver); err != nil && c.err == nil {
+			bps := make([]blueprint.Blueprint, len(c.blueprints))
+			for i, bp := range c.blueprints {
+				var err error
+				if bps[i], err = blueprint.Parse([]byte(bp)); err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+			}
+
+			if graph, err := merge.Build(bps, c.check, c.resolver); err != nil && c.err == nil {
 				t.Errorf("unexpected error: %v", err)
 			} else if err == nil && c.err != nil {
 				t.Errorf("expected error but non ocurred")

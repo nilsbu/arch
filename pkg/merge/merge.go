@@ -15,25 +15,45 @@ var ErrInvalidBlueprint = errors.New("invalid blueprint")
 
 var ErrNoSolution = errors.New("no solution found")
 
-func Build(bp blueprint.Blueprint, check Check, r *Resolver) (*graph.Graph, error) {
-	if choices, err := calcChoices(bp, "Root", r); err != nil {
-		return nil, err
-	} else {
-		for i := 0; i < choices.n(); i++ {
-			g := graph.New(nil)
-			if err := parse(g, graph.NodeIndex{}, choices.get(i), r); errors.Is(err, rule.ErrInvalidGraph) {
-				continue
+func Build(bps []blueprint.Blueprint, check Check, r *Resolver) (*graph.Graph, error) {
+	choicess := make([]*choices, len(bps))
+	ns := &ns{}
+	for i, bp := range bps {
+		if choices, err := calcChoices(bp, "Root", r); err != nil {
+			return nil, err
+		} else {
+			choicess[i] = choices
+			ns.add(choicess[i].n())
+		}
+	}
+
+	for i := 0; i < ns.total; i++ {
+		is := ns.get(i)
+
+		gs := make([]*graph.Graph, len(choicess))
+		ok := true
+		for j, choices := range choicess {
+
+			gs[j] = graph.New(nil)
+			if err := parse(gs[j], graph.NodeIndex{}, choices.get(is[j]), r); errors.Is(err, rule.ErrInvalidGraph) {
+				ok = false
+				break
 			} else if err != nil {
 				return nil, err
-			} else if ok, err := check.Match([]*graph.Graph{g}); err != nil {
-				return nil, err
-			} else if ok {
-				return g, nil
 			}
 		}
+		if !ok {
+			continue
+		}
 
-		return nil, ErrNoSolution
+		if ok, err := check.Match(gs); err != nil {
+			return nil, err
+		} else if ok {
+			return gs[0], nil
+		}
 	}
+
+	return nil, ErrNoSolution
 }
 
 func parse(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolver) error {
@@ -82,4 +102,31 @@ func parseBlock(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolve
 		}
 		return nil
 	}
+}
+
+// ns handles the iteration over multiple choices.
+type ns struct {
+	// TODO this is ugly, replace it by something better
+	total int
+	ns    []int
+}
+
+func (ns *ns) add(n int) {
+	if ns.total == 0 {
+		ns.total = n
+	} else {
+		ns.total *= n
+	}
+	ns.ns = append(ns.ns, n)
+}
+
+func (ns *ns) get(i int) []int {
+	is := make([]int, len(ns.ns))
+	exp := 1
+	for j, n := range ns.ns {
+		is[j] = (i / exp) % n
+		exp *= n
+	}
+
+	return is
 }
