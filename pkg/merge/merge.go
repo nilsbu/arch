@@ -79,7 +79,7 @@ func parseBlock(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolve
 		names := rule.ChildParams()
 		for i, child := range choice.children[1:] {
 			for range child.children {
-				if gcnidx, err := g.Add(nidx, nil); err != nil {
+				if gcnidx, err := g.Add(nidx); err != nil {
 					return err
 				} else {
 					name := names[i]

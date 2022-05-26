@@ -42,7 +42,7 @@ func TestCompare(t *testing.T) {
 			"a has additional child",
 			func() *graph.Graph {
 				g := graph.New(nil)
-				g.Add(graph.NodeIndex{0, 0}, nil)
+				g.Add(graph.NodeIndex{0, 0})
 				return g
 			},
 			func() *graph.Graph { return graph.New(nil) },
@@ -53,7 +53,7 @@ func TestCompare(t *testing.T) {
 			func() *graph.Graph { return graph.New(nil) },
 			func() *graph.Graph {
 				g := graph.New(nil)
-				g.Add(graph.NodeIndex{0, 0}, nil)
+				g.Add(graph.NodeIndex{0, 0})
 				return g
 			},
 			false, "children of [0 0] are disjunct in [] vs. [[1 0]]",
@@ -62,13 +62,13 @@ func TestCompare(t *testing.T) {
 			"different properties",
 			func() *graph.Graph {
 				g := graph.New(nil)
-				nidx, _ := g.Add(graph.NodeIndex{0, 0}, nil)
+				nidx, _ := g.Add(graph.NodeIndex{0, 0})
 				g.Node(nidx).Properties["A"] = 3
 				return g
 			},
 			func() *graph.Graph {
 				g := graph.New(nil)
-				nidx, _ := g.Add(graph.NodeIndex{0, 0}, nil)
+				nidx, _ := g.Add(graph.NodeIndex{0, 0})
 				g.Node(nidx).Properties["A"] = 2
 				return g
 			},
@@ -78,15 +78,15 @@ func TestCompare(t *testing.T) {
 			"same link",
 			func() *graph.Graph {
 				g := graph.New(nil)
-				n0, _ := g.Add(graph.NodeIndex{0, 0}, nil)
-				n1, _ := g.Add(graph.NodeIndex{0, 0}, nil)
+				n0, _ := g.Add(graph.NodeIndex{0, 0})
+				n1, _ := g.Add(graph.NodeIndex{0, 0})
 				g.Link(n0, n1)
 				return g
 			},
 			func() *graph.Graph {
 				g := graph.New(nil)
-				n0, _ := g.Add(graph.NodeIndex{0, 0}, nil)
-				n1, _ := g.Add(graph.NodeIndex{0, 0}, nil)
+				n0, _ := g.Add(graph.NodeIndex{0, 0})
+				n1, _ := g.Add(graph.NodeIndex{0, 0})
 				g.Link(n0, n1)
 				return g
 			},
@@ -96,15 +96,15 @@ func TestCompare(t *testing.T) {
 			"only first has link",
 			func() *graph.Graph {
 				g := graph.New(nil)
-				n0, _ := g.Add(graph.NodeIndex{0, 0}, nil)
-				n1, _ := g.Add(graph.NodeIndex{0, 0}, nil)
+				n0, _ := g.Add(graph.NodeIndex{0, 0})
+				n1, _ := g.Add(graph.NodeIndex{0, 0})
 				g.Link(n0, n1)
 				return g
 			},
 			func() *graph.Graph {
 				g := graph.New(nil)
-				g.Add(graph.NodeIndex{0, 0}, nil)
-				g.Add(graph.NodeIndex{0, 0}, nil)
+				g.Add(graph.NodeIndex{0, 0})
+				g.Add(graph.NodeIndex{0, 0})
 				return g
 			},
 			false, "edges of [1 0] are disjunct in [0] vs. []",
@@ -113,14 +113,14 @@ func TestCompare(t *testing.T) {
 			"only second has link",
 			func() *graph.Graph {
 				g := graph.New(nil)
-				g.Add(graph.NodeIndex{0, 0}, nil)
-				g.Add(graph.NodeIndex{0, 0}, nil)
+				g.Add(graph.NodeIndex{0, 0})
+				g.Add(graph.NodeIndex{0, 0})
 				return g
 			},
 			func() *graph.Graph {
 				g := graph.New(nil)
-				n0, _ := g.Add(graph.NodeIndex{0, 0}, nil)
-				n1, _ := g.Add(graph.NodeIndex{0, 0}, nil)
+				n0, _ := g.Add(graph.NodeIndex{0, 0})
+				n1, _ := g.Add(graph.NodeIndex{0, 0})
 				g.Link(n0, n1)
 				return g
 			},
@@ -130,15 +130,15 @@ func TestCompare(t *testing.T) {
 			"link in different direction",
 			func() *graph.Graph {
 				g := graph.New(nil)
-				n0, _ := g.Add(graph.NodeIndex{0, 0}, nil)
-				n1, _ := g.Add(graph.NodeIndex{0, 0}, nil)
+				n0, _ := g.Add(graph.NodeIndex{0, 0})
+				n1, _ := g.Add(graph.NodeIndex{0, 0})
 				g.Link(n0, n1)
 				return g
 			},
 			func() *graph.Graph {
 				g := graph.New(nil)
-				n0, _ := g.Add(graph.NodeIndex{0, 0}, nil)
-				n1, _ := g.Add(graph.NodeIndex{0, 0}, nil)
+				n0, _ := g.Add(graph.NodeIndex{0, 0})
+				n1, _ := g.Add(graph.NodeIndex{0, 0})
 				g.Link(n1, n0)
 				return g
 			},
@@ -148,16 +148,16 @@ func TestCompare(t *testing.T) {
 			"different edge properties",
 			func() *graph.Graph {
 				g := graph.New(nil)
-				n0, _ := g.Add(graph.NodeIndex{0, 0}, nil)
-				n1, _ := g.Add(graph.NodeIndex{0, 0}, nil)
+				n0, _ := g.Add(graph.NodeIndex{0, 0})
+				n1, _ := g.Add(graph.NodeIndex{0, 0})
 				eidx, _ := g.Link(n0, n1)
 				g.Edge(eidx).Properties["A"] = 123
 				return g
 			},
 			func() *graph.Graph {
 				g := graph.New(nil)
-				n0, _ := g.Add(graph.NodeIndex{0, 0}, nil)
-				n1, _ := g.Add(graph.NodeIndex{0, 0}, nil)
+				n0, _ := g.Add(graph.NodeIndex{0, 0})
+				n1, _ := g.Add(graph.NodeIndex{0, 0})
 				eidx, _ := g.Link(n0, n1)
 				g.Edge(eidx).Properties["A"] = 124
 				return g
@@ -169,21 +169,42 @@ func TestCompare(t *testing.T) {
 			func() *graph.Graph {
 				g := graph.New(nil)
 				g = graph.New(g)
-				n0, _ := g.Add(graph.NodeIndex{0, 0}, nil)
-				n1, _ := g.Add(graph.NodeIndex{0, 0}, nil)
+				n0, _ := g.Add(graph.NodeIndex{0, 0})
+				n1, _ := g.Add(graph.NodeIndex{0, 0})
 				eidx, _ := g.Link(n0, n1)
 				g.Edge(eidx).Properties["A"] = 123
 				return g
 			},
 			func() *graph.Graph {
 				g := graph.New(nil)
-				n0, _ := g.Add(graph.NodeIndex{0, 0}, nil)
-				n1, _ := g.Add(graph.NodeIndex{0, 0}, nil)
+				n0, _ := g.Add(graph.NodeIndex{0, 0})
+				n1, _ := g.Add(graph.NodeIndex{0, 0})
 				eidx, _ := g.Link(n0, n1)
 				g.Edge(eidx).Properties["A"] = 123
 				return g
 			},
 			true, "",
+		},
+		{
+			"only one inherits edge",
+			func() *graph.Graph {
+				g := graph.New(nil)
+				n0, _ := g.Add(graph.NodeIndex{0, 0})
+				n1, _ := g.Add(graph.NodeIndex{0, 0})
+				eidx, _ := g.Link(n0, n1)
+				n2, _ := g.Add(n0)
+				g.InheritEdge(n0, n2, []graph.EdgeIndex{eidx})
+				return g
+			},
+			func() *graph.Graph {
+				g := graph.New(nil)
+				n0, _ := g.Add(graph.NodeIndex{0, 0})
+				n1, _ := g.Add(graph.NodeIndex{0, 0})
+				g.Link(n0, n1)
+				g.Add(n0)
+				return g
+			},
+			false, "edges of [2 0] are disjunct in [0] vs. []",
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {

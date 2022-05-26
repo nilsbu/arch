@@ -102,9 +102,8 @@ func (g *Graph) Nodes(eidx EdgeIndex) [2][]NodeIndex {
 }
 
 // Add creates a new node.
-// The node has to have a parent and it may inherit edges that the parent has. Each edge may only be inherited once.
-// The node will lie on the layer directly under the parent.
-func (g *Graph) Add(parent NodeIndex, edges []EdgeIndex) (NodeIndex, error) {
+// The node has to have a parent. It will lie on the layer directly under the parent.
+func (g *Graph) Add(parent NodeIndex) (NodeIndex, error) {
 	if parent[0] < 0 || parent[1] < 0 {
 		return NodeIndex{}, fmt.Errorf("%w: cannot add node without parent", ErrIllegalAction)
 	} else if g.Node(parent) == nil {
@@ -114,27 +113,11 @@ func (g *Graph) Add(parent NodeIndex, edges []EdgeIndex) (NodeIndex, error) {
 	nidx := NodeIndex{parent[0] + 1, g.nodesInLayer(parent[0] + 1)}
 	node := g.createNodeAt(nidx)
 	node.Parent = parent
-	node.Edges = append(node.Edges, edges...)
 
 	if children, ok := g.children[parent]; ok {
 		g.children[parent] = append(children, nidx)
 	} else {
 		g.children[parent] = []NodeIndex{nidx}
-	}
-
-	for _, eidx := range edges {
-		s := g.findNodeInEdges(parent, eidx)
-		if s == -1 {
-			return NodeIndex{}, fmt.Errorf("%w: edge %v doesn't belong to parent", ErrIllegalAction, eidx)
-		}
-
-		if nodes, ok := g.edgeNodes[eidx]; ok {
-			nodes.Nodes[s] = append(nodes.Nodes[s], nidx)
-		} else {
-			n := &edgeNodes{}
-			n.Nodes[s] = []NodeIndex{nidx}
-			g.edgeNodes[eidx] = n
-		}
 	}
 
 	return nidx, nil
@@ -180,6 +163,28 @@ func (g *Graph) findNodeInEdges(nidx NodeIndex, eidx EdgeIndex) int {
 	} else {
 		return -1
 	}
+}
+
+// InheritEdge passes a node from parent to child. Each edge may only be inherited once.
+func (g *Graph) InheritEdge(parent, nidx NodeIndex, edges []EdgeIndex) error {
+	node := g.Node(nidx)
+	node.Edges = append(node.Edges, edges...)
+
+	for _, eidx := range edges {
+		s := g.findNodeInEdges(parent, eidx)
+		if s == -1 {
+			return fmt.Errorf("%w: edge %v doesn't belong to parent", ErrIllegalAction, eidx)
+		}
+
+		if nodes, ok := g.edgeNodes[eidx]; ok {
+			nodes.Nodes[s] = append(nodes.Nodes[s], nidx)
+		} else {
+			n := &edgeNodes{}
+			n.Nodes[s] = []NodeIndex{nidx}
+			g.edgeNodes[eidx] = n
+		}
+	}
+	return nil
 }
 
 // Link creates an edge between two nodes.

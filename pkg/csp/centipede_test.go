@@ -25,8 +25,8 @@ func TestCentipedeMatch(t *testing.T) {
 			[]func() *graph.Graph{
 				func() *graph.Graph {
 					g := graph.New(nil)
-					n0, _ := g.Add(graph.NodeIndex{}, nil)
-					n1, _ := g.Add(graph.NodeIndex{}, nil)
+					n0, _ := g.Add(graph.NodeIndex{})
+					n1, _ := g.Add(graph.NodeIndex{})
 					g.Link(n0, n1)
 					return g
 				},
@@ -46,10 +46,10 @@ func TestCentipedeMatch(t *testing.T) {
 			[]func() *graph.Graph{
 				func() *graph.Graph {
 					g := graph.New(nil)
-					n10, _ := g.Add(graph.NodeIndex{}, nil)
-					n11, _ := g.Add(graph.NodeIndex{}, nil)
+					n10, _ := g.Add(graph.NodeIndex{})
+					n11, _ := g.Add(graph.NodeIndex{})
 					g.Link(n10, n11)
-					g.Add(n10, nil)
+					g.Add(n10)
 					return g
 				},
 				func() *graph.Graph { return graph.New(nil) },
@@ -61,7 +61,7 @@ func TestCentipedeMatch(t *testing.T) {
 			[]func() *graph.Graph{
 				func() *graph.Graph {
 					g := graph.New(nil)
-					g.Add(graph.NodeIndex{}, nil)
+					g.Add(graph.NodeIndex{})
 					return g
 				},
 				func() *graph.Graph { return graph.New(nil) },
@@ -119,13 +119,13 @@ func TestCentipedeMatch(t *testing.T) {
 			[]func() *graph.Graph{
 				func() *graph.Graph {
 					g := graph.New(nil)
-					g.Add(graph.NodeIndex{}, nil)
-					g.Add(graph.NodeIndex{}, nil)
+					g.Add(graph.NodeIndex{})
+					g.Add(graph.NodeIndex{})
 					return g
 				},
 				func() *graph.Graph {
 					g := graph.New(nil)
-					g.Add(graph.NodeIndex{}, nil)
+					g.Add(graph.NodeIndex{})
 					return g
 				},
 			},
@@ -136,9 +136,9 @@ func TestCentipedeMatch(t *testing.T) {
 			[]func() *graph.Graph{
 				func() *graph.Graph {
 					g := graph.New(nil)
-					n10, _ := g.Add(graph.NodeIndex{}, nil)
-					n11, _ := g.Add(graph.NodeIndex{}, nil)
-					n12, _ := g.Add(graph.NodeIndex{}, nil)
+					n10, _ := g.Add(graph.NodeIndex{})
+					n11, _ := g.Add(graph.NodeIndex{})
+					n12, _ := g.Add(graph.NodeIndex{})
 					g.Node(n10).Properties["name"] = "a"
 					g.Node(n11).Properties["name"] = "b"
 					g.Node(n12).Properties["name"] = "c"
@@ -148,8 +148,8 @@ func TestCentipedeMatch(t *testing.T) {
 				},
 				func() *graph.Graph {
 					g := graph.New(nil)
-					n10, _ := g.Add(graph.NodeIndex{}, nil)
-					n11, _ := g.Add(graph.NodeIndex{}, nil)
+					n10, _ := g.Add(graph.NodeIndex{})
+					n11, _ := g.Add(graph.NodeIndex{})
 					g.Node(n10).Properties["name"] = "a"
 					g.Node(n11).Properties["name"] = "c"
 					g.Link(n10, n11)
@@ -163,10 +163,10 @@ func TestCentipedeMatch(t *testing.T) {
 			[]func() *graph.Graph{
 				func() *graph.Graph {
 					g := graph.New(nil)
-					n10, _ := g.Add(graph.NodeIndex{}, nil)
-					n11, _ := g.Add(graph.NodeIndex{}, nil)
-					n12, _ := g.Add(graph.NodeIndex{}, nil)
-					g.Add(graph.NodeIndex{}, nil)
+					n10, _ := g.Add(graph.NodeIndex{})
+					n11, _ := g.Add(graph.NodeIndex{})
+					n12, _ := g.Add(graph.NodeIndex{})
+					g.Add(graph.NodeIndex{})
 					g.Node(n10).Properties["name"] = "a"
 					g.Node(n11).Properties["name"] = "b"
 					g.Node(n12).Properties["name"] = "c"
@@ -177,9 +177,9 @@ func TestCentipedeMatch(t *testing.T) {
 				},
 				func() *graph.Graph {
 					g := graph.New(nil)
-					n10, _ := g.Add(graph.NodeIndex{}, nil)
-					n11, _ := g.Add(graph.NodeIndex{}, nil)
-					n12, _ := g.Add(graph.NodeIndex{}, nil)
+					n10, _ := g.Add(graph.NodeIndex{})
+					n11, _ := g.Add(graph.NodeIndex{})
+					n12, _ := g.Add(graph.NodeIndex{})
 					g.Node(n10).Properties["name"] = "a"
 					g.Node(n11).Properties["name"] = "b"
 					g.Node(n12).Properties["name"] = "c"
@@ -216,8 +216,8 @@ func TestCentipedeMatch(t *testing.T) {
 func TestResetNodes(t *testing.T) {
 	c := &csp.Centipede{}
 	g1 := graph.New(nil)
-	g1.Add(graph.NodeIndex{}, nil)
-	g1.Add(graph.NodeIndex{}, nil)
+	g1.Add(graph.NodeIndex{})
+	g1.Add(graph.NodeIndex{})
 
 	c.Match([]*graph.Graph{graph.New(nil), g1})
 	c.Match([]*graph.Graph{graph.New(nil), graph.New(nil)})

@@ -106,7 +106,7 @@ func TestBuild(t *testing.T) {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
 				node.Properties["name"] = "1"
-				nidx, _ := g.Add(graph.NodeIndex{}, nil)
+				nidx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nidx)
 				node.Properties["name"] = "R"
 				return g
@@ -131,7 +131,7 @@ func TestBuild(t *testing.T) {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
 				node.Properties["name"] = "1"
-				nidx, _ := g.Add(graph.NodeIndex{}, nil)
+				nidx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nidx)
 				node.Properties["name"] = "P"
 				return g
@@ -153,7 +153,7 @@ func TestBuild(t *testing.T) {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
 				node.Properties["name"] = "1"
-				nidx, _ := g.Add(graph.NodeIndex{}, nil)
+				nidx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nidx)
 				node.Properties["name"] = "P"
 				return g
@@ -187,7 +187,7 @@ func TestBuild(t *testing.T) {
 				node := g.Node(graph.NodeIndex{})
 				node.Properties["name"] = "1"
 				node.Properties["set"] = "meeee"
-				nidx, _ := g.Add(graph.NodeIndex{}, nil)
+				nidx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nidx)
 				node.Properties["name"] = "R"
 				node.Properties["asdf"] = "qwerty"
@@ -244,7 +244,7 @@ func TestBuild(t *testing.T) {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
 				node.Properties["name"] = "1"
-				nidx, _ := g.Add(graph.NodeIndex{}, nil)
+				nidx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nidx)
 				node.Properties["name"] = "P"
 				return g

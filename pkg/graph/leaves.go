@@ -19,7 +19,7 @@ func (g *Graph) leaves(nidx NodeIndex, out *Graph, mapping map[NodeIndex]NodeInd
 	node := g.Node(nidx)
 	children := g.Children(nidx)
 	if len(children) == 0 {
-		cidx, _ := out.Add(NodeIndex{}, nil)
+		cidx, _ := out.Add(NodeIndex{})
 		outNode := out.Node(cidx)
 		for k, v := range node.Properties {
 			outNode.Properties[k] = v
