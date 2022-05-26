@@ -17,8 +17,8 @@ func (n *AreaNode) SetRect(rect Rectangle) {
 }
 
 // Rectangle describes an axis-aligned rectangle.
-// It fills the area of all points (x, y) that fulfill X0 <= x < X1 && Y0 <= y < Y1.
-// In other words, (X0, Y0) is the minimal point which is inclusive, (X1, Y1) is the maximal point which is exclusive.
+// It fills the area of all points (x, y) that fulfill X0 <= x <= X1 && Y0 <= y <= Y1.
+// In other words, (X0, Y0) is the minimal point, (X1, Y1) is the maximal point.
 type Rectangle struct {
 	X0, Y0, X1, Y1 int
 }
