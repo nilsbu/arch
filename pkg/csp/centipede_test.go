@@ -209,7 +209,17 @@ func TestCentipedeMatch(t *testing.T) {
 			} else if !c.ok && ok {
 				t.Error("shouldn't have matched")
 			}
-			// t.Fail()
 		})
 	}
+}
+
+func TestResetNodes(t *testing.T) {
+	c := &csp.Centipede{}
+	g1 := graph.New(nil)
+	g1.Add(graph.NodeIndex{}, nil)
+	g1.Add(graph.NodeIndex{}, nil)
+
+	c.Match([]*graph.Graph{graph.New(nil), g1})
+	c.Match([]*graph.Graph{graph.New(nil), graph.New(nil)})
+	// nothing to check, if it doesn't crash, reset worked
 }

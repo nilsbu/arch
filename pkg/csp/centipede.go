@@ -40,6 +40,7 @@ func (c *Centipede) Match(graphs []*graph.Graph) (ok bool, err error) {
 
 func (c *Centipede) cleanup() {
 	c.graphs = nil
+	c.nodes = nil
 	c.vars = nil
 	c.names = nil
 	c.constraints = nil
