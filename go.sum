@@ -1,4 +1,6 @@
 github.com/gnboorse/centipede v1.0.2 h1:lpGjsG4b2bPc+GoHozJZis0u4JTvVyUBpg+KADTXE9U=
 github.com/gnboorse/centipede v1.0.2/go.mod h1:erwfJICUSSTBUAXcVf1oGi9SGBJjZgQnZMHQSof6H/U=
+github.com/nilsbu/async v0.1.0 h1:e3wwfrNx7jqNFtnchhB/HUntOz7IEavGWirXLd2qkxY=
+github.com/nilsbu/async v0.1.0/go.mod h1:Yp2c35NOIvWdhJSLzytE+b27ytGMUEhV9RuhfR5HNxI=
 golang.org/x/exp v0.0.0-20220318154914-8dddf5d87bd8 h1:s/+U+w0teGzcoH2mdIlFQ6KfVKGaYpgyGdUefZrn9TU=
 golang.org/x/exp v0.0.0-20220318154914-8dddf5d87bd8/go.mod h1:lgLbSvA5ygNOMpwM/9anMpWVlVJ7Z+cHWq/eFuinpGE=
