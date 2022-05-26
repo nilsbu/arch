@@ -170,6 +170,9 @@ func TestBuild(t *testing.T) {
 					Prep: func(
 						g *graph.Graph, nidx graph.NodeIndex,
 						children map[string][]graph.NodeIndex, bp blueprint.Blueprint) error {
+						if bp == nil {
+							return errors.New("bp not there")
+						}
 
 						node := g.Node(nidx)
 						node.Properties["set"] = "meeee"

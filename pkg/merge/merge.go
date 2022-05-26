@@ -89,7 +89,7 @@ func parseBlock(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolve
 			}
 		}
 
-		if err := rule.PrepareGraph(g, nidx, nidxs, nil); err != nil {
+		if err := rule.PrepareGraph(g, nidx, nidxs, choice.children[0].bp); err != nil {
 			return fmt.Errorf("couldn't create node of type '%v': %w", name, err)
 		}
 
