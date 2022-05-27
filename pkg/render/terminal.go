@@ -1,6 +1,7 @@
 package render
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
@@ -8,64 +9,50 @@ import (
 	"github.com/nilsbu/arch/pkg/world"
 )
 
+// t0 is the unicode offset for simple box drawing
 const t0 = 9472
+
+// t1 is the unicode offset for double line box drawing
 const t1 = 9552
 
 // TODO Could use box drawing more extensively
 // https://www.w3.org/TR/xml-entity-names/025.html
 
+// ErrIllegalData is returned when false data was passed to a rendering function.
+var ErrIllegalData = errors.New("illegal data")
+
+// Terminal renders tiles by writing Unicode characters into a io.Writer.
+// An error is returned when the input contains data that can't be rendered. This should not be the case when
+// Terminal() is kept up-to-date.
 func Terminal(w io.Writer, data world.Tiles) error {
-	if _, err := w.Write([]byte(string(rune(t0 + 12)))); err != nil {
-		return err
-	}
+	w.Write([]byte(string(rune(t0 + 12))))
+
 	for x := 0; x < data.Width(); x++ {
-		if _, err := w.Write([]byte(string(rune(t0 + 0)))); err != nil {
-			return err
-		}
+		w.Write([]byte(string(rune(t0 + 0))))
 	}
-	if _, err := w.Write([]byte(string(rune(t0 + 16)))); err != nil {
-		return err
-	}
-	if _, err := w.Write([]byte("\n")); err != nil {
-		return err
-	}
+	w.Write([]byte(string(rune(t0 + 16))))
+	w.Write([]byte("\n"))
 
 	for y := 0; y < data.Height(); y++ {
-		if _, err := w.Write([]byte(string(rune(t0 + 2)))); err != nil {
-			return err
-		}
+		w.Write([]byte(string(rune(t0 + 2))))
+
 		for x := 0; x < data.Width(); x++ {
-			r, err := getChar(data, x, y)
-			if err == nil {
-				_, err = w.Write([]byte(string(r)))
-			}
-			if err != nil {
+			if r, err := getChar(data, x, y); err != nil {
 				return err
+			} else {
+				w.Write([]byte(string(r)))
 			}
 		}
-		if _, err := w.Write([]byte(string(rune(t0 + 2)))); err != nil {
-			return err
-		}
-		if _, err := w.Write([]byte("\n")); err != nil {
-			return err
-		}
+		w.Write([]byte(string(rune(t0 + 2))))
+		w.Write([]byte("\n"))
 	}
 
-	if _, err := w.Write([]byte(string(rune(t0 + 20)))); err != nil {
-		return err
-	}
+	w.Write([]byte(string(rune(t0 + 20))))
 	for x := 0; x < data.Width(); x++ {
-		if _, err := w.Write([]byte(string(rune(t0 + 0)))); err != nil {
-			return err
-		}
+		w.Write([]byte(string(rune(t0 + 0))))
 	}
-	if _, err := w.Write([]byte(string(rune(t0 + 24)))); err != nil {
-		return err
-	}
-	if _, err := w.Write([]byte("\n")); err != nil {
-		return err
-	}
-
+	w.Write([]byte(string(rune(t0 + 24))))
+	w.Write([]byte("\n"))
 	return nil
 }
 
@@ -125,6 +112,6 @@ func wall(data world.Tiles, x, y int) rune {
 	case area.Left | area.Up | area.Right | area.Down:
 		return t1 + 28
 	default:
-		return 'X'
+		return t1 + 91
 	}
 }

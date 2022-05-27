@@ -62,7 +62,51 @@ func TestTerminal(t *testing.T) {
 				t0 + 2, int(' '), int(' '), int('!'), t0 + 2, 10,
 				t0 + 20, t0, t0, t0, t0 + 24, 10}),
 		},
-		// TODO test all that could go wrong
+		{
+			"all wall characters", // exception: isolated wall, that's in the next test
+			func() world.Tiles {
+				data := world.CreateTiles(5, 5, world.Tile{Type: world.Wall})
+				world.DrawRect(data, 1, 1, 1, 1, world.Tile{Type: world.Free})
+				world.DrawRect(data, 3, 1, 3, 1, world.Tile{Type: world.Free})
+				world.DrawRect(data, 1, 3, 1, 3, world.Tile{Type: world.Free})
+				world.DrawRect(data, 3, 3, 3, 3, world.Tile{Type: world.Free})
+				return data
+			},
+			true,
+			toStr([]int{
+				t0 + 12, t0, t0, t0, t0, t0, t0 + 16, 10,
+				t0 + 2, 9552 + 4, 9552, 9552 + 22, 9552, 9552 + 7, t0 + 2, 10,
+				t0 + 2, 9553, int(' '), 9553, int(' '), 9553, t0 + 2, 10,
+				t0 + 2, 9552 + 16, 9552, 9552 + 28, 9552, 9552 + 19, t0 + 2, 10,
+				t0 + 2, 9553, int(' '), 9553, int(' '), 9553, t0 + 2, 10,
+				t0 + 2, 9552 + 10, 9552, 9552 + 25, 9552, 9552 + 13, t0 + 2, 10,
+				t0 + 20, t0, t0, t0, t0, t0, t0 + 24, 10}),
+		},
+		{
+			"unconnected wall",
+			func() world.Tiles {
+				data := world.CreateTiles(3, 3, world.Tile{Type: world.Free})
+				world.DrawRect(data, 1, 1, 1, 1, world.Tile{Type: world.Wall})
+				return data
+			},
+			true,
+			toStr([]int{
+				t0 + 12, t0, t0, t0, t0 + 16, 10,
+				t0 + 2, int(' '), int(' '), int(' '), t0 + 2, 10,
+				t0 + 2, int(' '), 9643, int(' '), t0 + 2, 10,
+				t0 + 2, int(' '), int(' '), int(' '), t0 + 2, 10,
+				t0 + 20, t0, t0, t0, t0 + 24, 10}),
+		},
+		{
+			"illegal tile type",
+			func() world.Tiles {
+				data := world.CreateTiles(3, 3, world.Tile{Type: world.Free})
+				world.DrawRect(data, 0, 0, 0, 1, world.Tile{Type: world.TileType(255)})
+				return data
+			},
+			false,
+			"",
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			b := &strings.Builder{}
