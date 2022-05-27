@@ -2,8 +2,12 @@ package area
 
 import "github.com/nilsbu/arch/pkg/graph"
 
+// AreaNode is a node that has a rectangular area.
+// The rect will default to {0, 0, 0, 0} is not otherwise specified.
+// It uses the property "rect".
 type AreaNode graph.Node
 
+// GetRect returns the area of the node.
 func (n *AreaNode) GetRect() Rectangle {
 	if rect, ok := n.Properties["rect"]; ok {
 		return rect.(Rectangle)
@@ -12,6 +16,7 @@ func (n *AreaNode) GetRect() Rectangle {
 	}
 }
 
+// SetRect sets the area of the node.
 func (n *AreaNode) SetRect(rect Rectangle) {
 	n.Properties["rect"] = rect
 }
@@ -23,9 +28,13 @@ type Rectangle struct {
 	X0, Y0, X1, Y1 int
 }
 
+// DoorEdge that represents a door.
+// It uses the property "pos" to define the position of the door. The orientation is defined implicitely by the nodes
+// that it connects. The position defaults to [0, 0] when not set.
 type DoorEdge graph.Edge
 
-func (e *DoorEdge) GetRect() Point {
+// GetPos returns the position of the door.
+func (e *DoorEdge) GetPos() Point {
 	if pos, ok := e.Properties["pos"]; ok {
 		return pos.(Point)
 	} else {
@@ -33,14 +42,17 @@ func (e *DoorEdge) GetRect() Point {
 	}
 }
 
+// SetPos sets the position of the door.
 func (e *DoorEdge) SetPos(pos Point) {
 	e.Properties["pos"] = pos
 }
 
+// Point specifies a position.
 type Point struct {
 	X, Y int
 }
 
+// Direction speficies a direction.
 type Direction byte
 
 const (
