@@ -51,7 +51,7 @@ func main() {
 	}
 }
 
-func draw(g *graph.Graph, nidx graph.NodeIndex, tiles world.Tiles) error {
+func draw(g *graph.Graph, nidx graph.NodeIndex, tiles *world.Tiles) error {
 	// TODO this is ugly, right a correct function for this
 	a := (*area.AreaNode)(g.Node(nidx))
 	rect := a.GetRect()

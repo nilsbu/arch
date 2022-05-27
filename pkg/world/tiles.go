@@ -2,6 +2,8 @@ package world
 
 import "github.com/nilsbu/async"
 
+// TileType is the type of a tile.
+// The type of a tile affects its role in the level.
 type TileType uint8
 
 const (
@@ -11,27 +13,24 @@ const (
 	Occupied
 )
 
+// A Tile is the content of a slot in Tiles.
+// It contains information about the TileType and about the appearance.
 type Tile struct {
 	Type    TileType
 	Texture int16
 }
 
-type Tiles interface {
-	Get(x, y int) Tile
-	Set(x, y int, tile Tile)
-
-	Width() int
-	Height() int
-}
-
-type tiles struct {
+// Tiles is a field of tiles.
+type Tiles struct {
 	data          []Tile
 	width, height int
 }
 
-func CreateTiles(width, height int, init Tile) Tiles {
+// CreateTiles creates Tiles.
+// The data is initializes with init in every slot.
+func CreateTiles(width, height int, init Tile) *Tiles {
 	data := make([]Tile, width*height)
-	ts := &tiles{
+	ts := &Tiles{
 		data:  data,
 		width: width, height: height,
 	}
@@ -44,23 +43,25 @@ func CreateTiles(width, height int, init Tile) Tiles {
 	return ts
 }
 
-func (ts *tiles) Get(x, y int) Tile {
+func (ts *Tiles) Get(x, y int) Tile {
 	return ts.data[x+y*ts.width]
 }
 
-func (ts *tiles) Set(x, y int, tile Tile) {
+func (ts *Tiles) Set(x, y int, tile Tile) {
 	ts.data[x+y*ts.width] = tile
 }
 
-func (ts *tiles) Width() int {
+func (ts *Tiles) Width() int {
 	return ts.width
 }
 
-func (ts *tiles) Height() int {
+func (ts *Tiles) Height() int {
 	return ts.height
 }
 
-func DrawFrame(ts Tiles, x0, y0, x1, y1 int, tile Tile) {
+// DrawFrame draws a non-filled rectangle.
+// (x0, y0) is the top-left point, (x1, y1) is the bottom-right point.
+func DrawFrame(ts *Tiles, x0, y0, x1, y1 int, tile Tile) {
 	for xx := x0; xx <= x1; xx++ {
 		ts.Set(xx, y0, tile)
 	}
@@ -73,7 +74,9 @@ func DrawFrame(ts Tiles, x0, y0, x1, y1 int, tile Tile) {
 	}
 }
 
-func DrawRect(ts Tiles, x0, y0, x1, y1 int, tile Tile) {
+// DrawRectangle fills a rectangle.
+// (x0, y0) is the top-left point, (x1, y1) is the bottom-right point.
+func DrawRectangle(ts *Tiles, x0, y0, x1, y1 int, tile Tile) {
 	for yy := y0; yy <= y1; yy++ {
 		for xx := x0; xx <= x1; xx++ {
 			ts.Set(xx, yy, tile)

@@ -21,13 +21,13 @@ const t0 = 9472
 func TestTerminal(t *testing.T) {
 	for _, c := range []struct {
 		name   string
-		tiles  func() world.Tiles
+		tiles  func() *world.Tiles
 		ok     bool
 		expect string
 	}{
 		{
 			"empty",
-			func() world.Tiles { return world.CreateTiles(0, 0, world.Tile{}) },
+			func() *world.Tiles { return world.CreateTiles(0, 0, world.Tile{}) },
 			true,
 			toStr([]int{
 				t0 + 12, t0 + 16, 10,
@@ -35,7 +35,7 @@ func TestTerminal(t *testing.T) {
 		},
 		{
 			"all free",
-			func() world.Tiles { return world.CreateTiles(3, 3, world.Tile{Type: world.Free}) },
+			func() *world.Tiles { return world.CreateTiles(3, 3, world.Tile{Type: world.Free}) },
 			true,
 			toStr([]int{
 				t0 + 12, t0, t0, t0, t0 + 16, 10,
@@ -46,12 +46,12 @@ func TestTerminal(t *testing.T) {
 		},
 		{
 			"all types",
-			func() world.Tiles {
+			func() *world.Tiles {
 				data := world.CreateTiles(3, 3, world.Tile{Type: world.Free})
-				world.DrawRect(data, 0, 0, 0, 1, world.Tile{Type: world.Wall})
-				world.DrawRect(data, 1, 1, 1, 1, world.Tile{Type: world.Door})
-				world.DrawRect(data, 2, 1, 2, 1, world.Tile{Type: world.Wall})
-				world.DrawRect(data, 2, 2, 2, 2, world.Tile{Type: world.Occupied})
+				world.DrawRectangle(data, 0, 0, 0, 1, world.Tile{Type: world.Wall})
+				world.DrawRectangle(data, 1, 1, 1, 1, world.Tile{Type: world.Door})
+				world.DrawRectangle(data, 2, 1, 2, 1, world.Tile{Type: world.Wall})
+				world.DrawRectangle(data, 2, 2, 2, 2, world.Tile{Type: world.Occupied})
 				return data
 			},
 			true,
@@ -64,12 +64,12 @@ func TestTerminal(t *testing.T) {
 		},
 		{
 			"all wall characters", // exception: isolated wall, that's in the next test
-			func() world.Tiles {
+			func() *world.Tiles {
 				data := world.CreateTiles(5, 5, world.Tile{Type: world.Wall})
-				world.DrawRect(data, 1, 1, 1, 1, world.Tile{Type: world.Free})
-				world.DrawRect(data, 3, 1, 3, 1, world.Tile{Type: world.Free})
-				world.DrawRect(data, 1, 3, 1, 3, world.Tile{Type: world.Free})
-				world.DrawRect(data, 3, 3, 3, 3, world.Tile{Type: world.Free})
+				world.DrawRectangle(data, 1, 1, 1, 1, world.Tile{Type: world.Free})
+				world.DrawRectangle(data, 3, 1, 3, 1, world.Tile{Type: world.Free})
+				world.DrawRectangle(data, 1, 3, 1, 3, world.Tile{Type: world.Free})
+				world.DrawRectangle(data, 3, 3, 3, 3, world.Tile{Type: world.Free})
 				return data
 			},
 			true,
@@ -84,9 +84,9 @@ func TestTerminal(t *testing.T) {
 		},
 		{
 			"unconnected wall",
-			func() world.Tiles {
+			func() *world.Tiles {
 				data := world.CreateTiles(3, 3, world.Tile{Type: world.Free})
-				world.DrawRect(data, 1, 1, 1, 1, world.Tile{Type: world.Wall})
+				world.DrawRectangle(data, 1, 1, 1, 1, world.Tile{Type: world.Wall})
 				return data
 			},
 			true,
@@ -99,9 +99,9 @@ func TestTerminal(t *testing.T) {
 		},
 		{
 			"illegal tile type",
-			func() world.Tiles {
+			func() *world.Tiles {
 				data := world.CreateTiles(3, 3, world.Tile{Type: world.Free})
-				world.DrawRect(data, 0, 0, 0, 1, world.Tile{Type: world.TileType(255)})
+				world.DrawRectangle(data, 0, 0, 0, 1, world.Tile{Type: world.TileType(255)})
 				return data
 			},
 			false,

@@ -9,13 +9,13 @@ import (
 func TestTiles(t *testing.T) {
 	for _, c := range []struct {
 		name    string
-		create  func() world.Tiles
+		create  func() *world.Tiles
 		types   []world.TileType
 		texture []int16
 	}{
 		{
 			"zero, zero",
-			func() world.Tiles {
+			func() *world.Tiles {
 				return world.CreateTiles(0, 0, world.Tile{world.Free, 0})
 			},
 			[]world.TileType{},
@@ -23,7 +23,7 @@ func TestTiles(t *testing.T) {
 		},
 		{
 			"single line free",
-			func() world.Tiles {
+			func() *world.Tiles {
 				return world.CreateTiles(3, 1, world.Tile{world.Wall, 1})
 			},
 			[]world.TileType{world.Wall, world.Wall, world.Wall},
@@ -31,7 +31,7 @@ func TestTiles(t *testing.T) {
 		},
 		{
 			"2D all the same",
-			func() world.Tiles {
+			func() *world.Tiles {
 				return world.CreateTiles(3, 3, world.Tile{world.Wall, 1})
 			},
 			[]world.TileType{
@@ -43,7 +43,7 @@ func TestTiles(t *testing.T) {
 		},
 		{
 			"frame",
-			func() world.Tiles {
+			func() *world.Tiles {
 				ts := world.CreateTiles(5, 5, world.Tile{world.Free, 1})
 				world.DrawFrame(ts, 1, 0, 4, 2, world.Tile{world.Wall, 2})
 				return ts
@@ -59,9 +59,9 @@ func TestTiles(t *testing.T) {
 		},
 		{
 			"rect",
-			func() world.Tiles {
+			func() *world.Tiles {
 				ts := world.CreateTiles(6, 5, world.Tile{world.Free, 1})
-				world.DrawRect(ts, 1, 0, 4, 2, world.Tile{world.Wall, 2})
+				world.DrawRectangle(ts, 1, 0, 4, 2, world.Tile{world.Wall, 2})
 				return ts
 			},
 			[]world.TileType{

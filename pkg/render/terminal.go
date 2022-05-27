@@ -24,7 +24,7 @@ var ErrIllegalData = errors.New("illegal data")
 // Terminal renders tiles by writing Unicode characters into a io.Writer.
 // An error is returned when the input contains data that can't be rendered. This should not be the case when
 // Terminal() is kept up-to-date.
-func Terminal(w io.Writer, data world.Tiles) error {
+func Terminal(w io.Writer, data *world.Tiles) error {
 	w.Write([]byte(string(rune(t0 + 12))))
 
 	for x := 0; x < data.Width(); x++ {
@@ -56,7 +56,7 @@ func Terminal(w io.Writer, data world.Tiles) error {
 	return nil
 }
 
-func getChar(data world.Tiles, x, y int) (rune, error) {
+func getChar(data *world.Tiles, x, y int) (rune, error) {
 	t := data.Get(x, y).Type
 
 	switch t {
@@ -73,7 +73,7 @@ func getChar(data world.Tiles, x, y int) (rune, error) {
 	}
 }
 
-func wall(data world.Tiles, x, y int) rune {
+func wall(data *world.Tiles, x, y int) rune {
 	var o area.Direction
 	if x > 0 && (data.Get(x-1, y).Type == world.Wall || data.Get(x-1, y).Type == world.Door) {
 		o |= area.Left
