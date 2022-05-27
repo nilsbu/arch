@@ -1,0 +1,25 @@
+{
+    "Root": {
+        "@rule": "House",
+        "interior": "Corridor",
+        "exterior": {"@rule": "NOP"},
+        "rect": "[0,0,40,20]"
+    },
+    "Corridor": {
+        "@rule": "Corridor",
+        "left": ["TwoRooms2", "Room", "TwoRooms", "Room"],
+        "right": ["TwoRooms2", "Room"],
+        "corridor": "Room"
+    },
+    "TwoRooms": {
+        "@rule": "TwoRooms",
+        "rooms": ["Room", "Room"]
+    },
+    "TwoRooms2": {
+        "@rule": "TwoRooms",
+        "rooms": ["TwoRooms", "Room"]
+    },
+    "Room": {
+        "@rule": "Room"
+    }
+}
