@@ -77,7 +77,6 @@ func draw(g *graph.Graph, nidx graph.NodeIndex, tiles world.Tiles) error {
 	// TODO If this is moved before the recursive call, it doesn't work. Why?
 	for _, eidx := range a.Edges {
 		pos := (*area.DoorEdge)(g.Edge(eidx)).GetPos()
-		fmt.Println(pos)
 		tiles.Set(pos.X, pos.Y, world.Tile{Type: world.Free})
 	}
 	return nil
