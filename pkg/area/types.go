@@ -57,7 +57,7 @@ type Direction byte
 
 const (
 	Up    Direction = 1
-	Down  Direction = 2
-	Left  Direction = 4
-	Right Direction = 8
+	Right Direction = 2
+	Down  Direction = 4
+	Left  Direction = 8
 )
