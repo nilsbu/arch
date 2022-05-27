@@ -123,7 +123,7 @@ func wall(data world.Tiles, x, y int) rune {
 	case area.Left | area.Up | area.Right:
 		return t1 + 25
 	case area.Left | area.Up | area.Right | area.Down:
-		return t1 + 25
+		return t1 + 28
 	default:
 		return 'X'
 	}
