@@ -142,7 +142,7 @@ func TestBuild(t *testing.T) {
 			"check with centipede",
 			[]string{
 				`{"Root":[
-					{"@":"1","a":[{"@":"R"},{"@":"P"},{"@":"R"}]}, 
+					{"@":"1","a":[{"@":"R"},{"@":"R"},{"@":"R"}]},
 					{"@":"1","a":{"@":"P"}}]}`,
 				`{"Root":[
 						{"@":"1","a":{"@":"P"}}]}`,
@@ -156,6 +156,26 @@ func TestBuild(t *testing.T) {
 				nidx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nidx)
 				node.Properties["name"] = "P"
+				return g
+			},
+			nil,
+		},
+		{
+			"different types of children",
+			[]string{
+				`{"Root":[
+					{"@":"1","a":[{"@":"R"},{"@":"P"}]}]}`,
+			},
+			&csp.Centipede{},
+			resolver,
+			func() *graph.Graph {
+				g := graph.New(nil)
+				node := g.Node(graph.NodeIndex{})
+				node.Properties["name"] = "1"
+				n0, _ := g.Add(graph.NodeIndex{})
+				g.Node(n0).Properties["name"] = "R"
+				n1, _ := g.Add(graph.NodeIndex{})
+				g.Node(n1).Properties["name"] = "P"
 				return g
 			},
 			nil,

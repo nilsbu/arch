@@ -73,17 +73,17 @@ func parseBlock(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolve
 		return err
 	} else {
 		nidxs := map[string][]graph.NodeIndex{}
-		namedChoices := map[string]*bpNode{}
+		namedChoices := map[string][]*bpNode{}
 		name := g.Node(nidx).Properties["name"].(string)
 		rule := r.Keys[name]
 		names := rule.ChildParams()
 		for i, child := range choice.children[1:] {
-			for range child.children {
+			for _, grandchild := range child.children {
 				if gcnidx, err := g.Add(nidx); err != nil {
 					return err
 				} else {
 					name := names[i]
-					namedChoices[name] = child
+					namedChoices[name] = append(namedChoices[name], grandchild)
 					nidxs[name] = append(nidxs[name], gcnidx)
 				}
 			}
@@ -94,8 +94,8 @@ func parseBlock(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolve
 		}
 
 		for name, children := range nidxs {
-			for _, child := range children {
-				if err := parse(g, child, namedChoices[name], r); err != nil {
+			for i, child := range children {
+				if err := parse(g, child, namedChoices[name][i], r); err != nil {
 					return err
 				}
 			}
