@@ -58,9 +58,9 @@ func Build(bps []blueprint.Blueprint, check Check, r *Resolver) (*graph.Graph, e
 
 func parse(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolver) error {
 	if choice.bp != nil {
-		node := g.Node(nidx)
-		node.Properties["name"] = choice.bp.Values(r.Name)[0]
-		return nil
+		setName(g, nidx, choice, r)
+		rule := r.Keys[choice.bp.Values(r.Name)[0]]
+		return rule.PrepareGraph(g, nidx, map[string][]graph.NodeIndex{}, choice.bp)
 	} else if choice.children[0].bp == nil {
 		return parse(g, nidx, choice.children[0], r)
 	} else {
@@ -68,40 +68,42 @@ func parse(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolver) er
 	}
 }
 
+func setName(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolver) {
+	node := g.Node(nidx)
+	node.Properties["name"] = choice.bp.Values(r.Name)[0]
+}
+
 func parseBlock(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolver) error {
-	if err := parse(g, nidx, choice.children[0], r); err != nil {
-		return err
-	} else {
-		nidxs := map[string][]graph.NodeIndex{}
-		namedChoices := map[string][]*bpNode{}
-		name := g.Node(nidx).Properties["name"].(string)
-		rule := r.Keys[name]
-		names := rule.ChildParams()
-		for i, child := range choice.children[1:] {
-			for _, grandchild := range child.children {
-				if gcnidx, err := g.Add(nidx); err != nil {
-					return err
-				} else {
-					name := names[i]
-					namedChoices[name] = append(namedChoices[name], grandchild)
-					nidxs[name] = append(nidxs[name], gcnidx)
-				}
+	setName(g, nidx, choice.children[0], r)
+	nidxs := map[string][]graph.NodeIndex{}
+	namedChoices := map[string][]*bpNode{}
+	name := g.Node(nidx).Properties["name"].(string)
+	rule := r.Keys[name]
+	names := rule.ChildParams()
+	for i, child := range choice.children[1:] {
+		for _, grandchild := range child.children {
+			if gcnidx, err := g.Add(nidx); err != nil {
+				return err
+			} else {
+				name := names[i]
+				namedChoices[name] = append(namedChoices[name], grandchild)
+				nidxs[name] = append(nidxs[name], gcnidx)
 			}
 		}
-
-		if err := rule.PrepareGraph(g, nidx, nidxs, choice.children[0].bp); err != nil {
-			return fmt.Errorf("couldn't create node of type '%v': %w", name, err)
-		}
-
-		for name, children := range nidxs {
-			for i, child := range children {
-				if err := parse(g, child, namedChoices[name][i], r); err != nil {
-					return err
-				}
-			}
-		}
-		return nil
 	}
+
+	if err := rule.PrepareGraph(g, nidx, nidxs, choice.children[0].bp); err != nil {
+		return fmt.Errorf("couldn't create node of type '%v': %w", name, err)
+	}
+
+	for name, children := range nidxs {
+		for i, child := range children {
+			if err := parse(g, child, namedChoices[name][i], r); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // ns handles the iteration over multiple choices.

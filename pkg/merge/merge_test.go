@@ -54,6 +54,14 @@ func TestBuild(t *testing.T) {
 			"1": &tr.RuleMock{Params: []string{"a"}},
 			"R": &tr.RuleMock{},
 			"P": &tr.RuleMock{},
+			"Error": &tr.RuleMock{Prep: func(
+				g *graph.Graph,
+				nidx graph.NodeIndex,
+				children map[string][]graph.NodeIndex,
+				bp blueprint.Blueprint) error {
+				return merge.ErrUnknownKey
+			},
+			},
 		},
 	}
 
@@ -196,8 +204,10 @@ func TestBuild(t *testing.T) {
 
 						node := g.Node(nidx)
 						node.Properties["set"] = "meeee"
-						child := g.Node(children["a"][0])
-						child.Properties["asdf"] = "qwerty"
+						if as, ok := children["a"]; ok {
+							child := g.Node(as[0])
+							child.Properties["asdf"] = "qwerty"
+						}
 						return nil
 					},
 				},
@@ -270,6 +280,28 @@ func TestBuild(t *testing.T) {
 				return g
 			},
 			nil,
+		},
+		{
+			// this test was introduced because of a bug where PrepareGraph wasn't called on leafs
+			"element that always fails",
+			[]string{`{"Root":{"@":"1","a":{"@":"X"}}}`},
+			allOk,
+			with(resolver, map[string]rule.Rule{
+				"X": &tr.RuleMock{
+					Prep: func() func(
+						g *graph.Graph, nidx graph.NodeIndex,
+						children map[string][]graph.NodeIndex, bp blueprint.Blueprint) error {
+						return func(
+							g *graph.Graph, nidx graph.NodeIndex,
+							children map[string][]graph.NodeIndex, bp blueprint.Blueprint) error {
+
+							return fmt.Errorf("%w", rule.ErrPreparation)
+						}
+					}(),
+				},
+			}),
+			func() *graph.Graph { return nil },
+			rule.ErrPreparation,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
