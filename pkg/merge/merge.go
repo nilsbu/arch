@@ -15,7 +15,7 @@ var ErrInvalidBlueprint = errors.New("invalid blueprint")
 
 var ErrNoSolution = errors.New("no solution found")
 
-func Build(bps []blueprint.Blueprint, check Check, r *Resolver) (*graph.Graph, error) {
+func Build(bps []*blueprint.Blueprint, check Check, r *Resolver) (*graph.Graph, error) {
 	choicess := make([]*choices, len(bps))
 	ns := &ns{}
 	for i, bp := range bps {

@@ -17,6 +17,6 @@ type Rule interface {
 		g *graph.Graph,
 		nidx graph.NodeIndex,
 		children map[string][]graph.NodeIndex,
-		bp blueprint.Blueprint,
+		bp *blueprint.Blueprint,
 	) error
 }

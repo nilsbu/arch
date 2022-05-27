@@ -189,7 +189,7 @@ func TestBlueprint(t *testing.T) {
 
 func checkBlueprint(
 	t *testing.T,
-	bp blueprint.Blueprint,
+	bp *blueprint.Blueprint,
 	properties []string,
 	children []string,
 	checks []ksvs) {

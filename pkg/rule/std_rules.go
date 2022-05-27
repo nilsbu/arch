@@ -18,7 +18,7 @@ func (r House) PrepareGraph(
 	g *graph.Graph,
 	nidx graph.NodeIndex,
 	children map[string][]graph.NodeIndex,
-	bp blueprint.Blueprint,
+	bp *blueprint.Blueprint,
 ) error {
 	a := (*area.AreaNode)(g.Node(nidx))
 	a.Properties["render-walls"] = false
@@ -53,7 +53,7 @@ func (r Corridor) PrepareGraph(
 	g *graph.Graph,
 	nidx graph.NodeIndex,
 	children map[string][]graph.NodeIndex,
-	bp blueprint.Blueprint,
+	bp *blueprint.Blueprint,
 ) error {
 	a := (*area.AreaNode)(g.Node(nidx))
 	rect := a.GetRect()
@@ -112,7 +112,7 @@ func (r TwoRooms) PrepareGraph(
 	g *graph.Graph,
 	nidx graph.NodeIndex,
 	children map[string][]graph.NodeIndex,
-	bp blueprint.Blueprint,
+	bp *blueprint.Blueprint,
 ) error {
 	a := (*area.AreaNode)(g.Node(nidx))
 	chi := make([]*area.AreaNode, len(children["rooms"]))
@@ -137,7 +137,7 @@ func (r Room) PrepareGraph(
 	g *graph.Graph,
 	nidx graph.NodeIndex,
 	children map[string][]graph.NodeIndex,
-	bp blueprint.Blueprint,
+	bp *blueprint.Blueprint,
 ) error {
 	return nil
 }
@@ -152,7 +152,7 @@ func (r NOP) PrepareGraph(
 	g *graph.Graph,
 	nidx graph.NodeIndex,
 	children map[string][]graph.NodeIndex,
-	bp blueprint.Blueprint,
+	bp *blueprint.Blueprint,
 ) error {
 	g.Node(nidx).Properties["render-walls"] = false
 	return nil

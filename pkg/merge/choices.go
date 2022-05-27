@@ -9,12 +9,12 @@ import (
 type choices struct {
 	options   []group
 	values    []string
-	blueprint blueprint.Blueprint
+	blueprint *blueprint.Blueprint
 }
 
 type group []*choices
 
-func calcChoices(bp blueprint.Blueprint, property string, resolver *Resolver) (*choices, error) {
+func calcChoices(bp *blueprint.Blueprint, property string, resolver *Resolver) (*choices, error) {
 	result := &choices{
 		values:    bp.Values(property),
 		blueprint: bp,
@@ -44,7 +44,7 @@ func calcChoices(bp blueprint.Blueprint, property string, resolver *Resolver) (*
 	return result, nil
 }
 
-func getGroup(bp blueprint.Blueprint, resolver *Resolver) (group, error) {
+func getGroup(bp *blueprint.Blueprint, resolver *Resolver) (group, error) {
 	if name := bp.Values(resolver.Name); len(name) != 1 {
 		return nil, fmt.Errorf("%w: ", ErrInvalidBlueprint)
 	} else {
@@ -66,7 +66,7 @@ func getGroup(bp blueprint.Blueprint, resolver *Resolver) (group, error) {
 	}
 }
 
-func calcConjunction(bp blueprint.Blueprint, property string, resolver *Resolver) (*choices, error) {
+func calcConjunction(bp *blueprint.Blueprint, property string, resolver *Resolver) (*choices, error) {
 	result := &choices{
 		blueprint: bp,
 	}
@@ -116,7 +116,7 @@ func (c *choices) n() int {
 
 type bpNode struct {
 	children []*bpNode
-	bp       blueprint.Blueprint
+	bp       *blueprint.Blueprint
 }
 
 func (c *choices) get(i int) *bpNode {

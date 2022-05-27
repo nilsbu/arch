@@ -8,25 +8,16 @@ import (
 
 var ErrInvalidScript = errors.New("blueprint script is invalid")
 
-// TODO document
-type Blueprint interface {
-	Values(property string) []string
-	Properties() []string
-
-	Child(property string) Blueprint
-	Children() []string
-
-	// TODO Properties() and Children() don't contain those reachable through parent
-}
-
-type block struct {
-	parent   Blueprint
+type Blueprint struct {
+	parent   *Blueprint
 	values   map[string][]string
-	children map[string]Blueprint
+	children map[string]*Blueprint
 }
 
+// TODO Properties() and Children() don't contain those reachable through parent
+
 // TODO document
-func Parse(data []byte) (Blueprint, error) {
+func Parse(data []byte) (*Blueprint, error) {
 	var raw map[string]interface{}
 	err := json.Unmarshal(data, &raw)
 	if err != nil {
@@ -36,11 +27,11 @@ func Parse(data []byte) (Blueprint, error) {
 	return parseRaw(raw, nil)
 }
 
-func parseRaw(raw map[string]interface{}, parent Blueprint) (Blueprint, error) {
-	bp := &block{
+func parseRaw(raw map[string]interface{}, parent *Blueprint) (*Blueprint, error) {
+	bp := &Blueprint{
 		parent:   parent,
 		values:   map[string][]string{},
-		children: map[string]Blueprint{},
+		children: map[string]*Blueprint{},
 	}
 
 	for k, v := range raw {
@@ -55,7 +46,7 @@ func parseRaw(raw map[string]interface{}, parent Blueprint) (Blueprint, error) {
 	return bp, nil
 }
 
-func (b *block) parseValues(raw interface{}, k string, valueCounter *int) ([]string, error) {
+func (b *Blueprint) parseValues(raw interface{}, k string, valueCounter *int) ([]string, error) {
 	switch value := raw.(type) {
 	case string:
 		return []string{value}, nil
@@ -83,7 +74,7 @@ func (b *block) parseValues(raw interface{}, k string, valueCounter *int) ([]str
 	}
 }
 
-func (b *block) Values(property string) []string {
+func (b *Blueprint) Values(property string) []string {
 	if values, ok := b.values[property]; ok {
 		return values
 	} else if b.parent != nil {
@@ -93,7 +84,7 @@ func (b *block) Values(property string) []string {
 	}
 }
 
-func (b *block) Properties() []string {
+func (b *Blueprint) Properties() []string {
 	properties := make([]string, len(b.values))
 	i := 0
 	for property := range b.values {
@@ -103,7 +94,7 @@ func (b *block) Properties() []string {
 	return properties
 }
 
-func (b *block) Child(property string) Blueprint {
+func (b *Blueprint) Child(property string) *Blueprint {
 	if child, ok := b.children[property]; ok {
 		return child
 	} else if b.parent != nil {
@@ -113,7 +104,7 @@ func (b *block) Child(property string) Blueprint {
 	}
 }
 
-func (b *block) Children() []string {
+func (b *Blueprint) Children() []string {
 	children := make([]string, len(b.children))
 	i := 0
 	for property := range b.children {

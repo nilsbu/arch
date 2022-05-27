@@ -58,7 +58,7 @@ func TestBuild(t *testing.T) {
 				g *graph.Graph,
 				nidx graph.NodeIndex,
 				children map[string][]graph.NodeIndex,
-				bp blueprint.Blueprint) error {
+				bp *blueprint.Blueprint) error {
 				return merge.ErrUnknownKey
 			},
 			},
@@ -197,7 +197,7 @@ func TestBuild(t *testing.T) {
 					Params: []string{"a"},
 					Prep: func(
 						g *graph.Graph, nidx graph.NodeIndex,
-						children map[string][]graph.NodeIndex, bp blueprint.Blueprint) error {
+						children map[string][]graph.NodeIndex, bp *blueprint.Blueprint) error {
 						if bp == nil {
 							return errors.New("bp not there")
 						}
@@ -234,7 +234,7 @@ func TestBuild(t *testing.T) {
 					Params: []string{"a"},
 					Prep: func(
 						g *graph.Graph, nidx graph.NodeIndex,
-						children map[string][]graph.NodeIndex, bp blueprint.Blueprint) error {
+						children map[string][]graph.NodeIndex, bp *blueprint.Blueprint) error {
 
 						return fmt.Errorf("%w", rule.ErrPreparation)
 					},
@@ -254,11 +254,11 @@ func TestBuild(t *testing.T) {
 					Params: []string{"a"},
 					Prep: func() func(
 						g *graph.Graph, nidx graph.NodeIndex,
-						children map[string][]graph.NodeIndex, bp blueprint.Blueprint) error {
+						children map[string][]graph.NodeIndex, bp *blueprint.Blueprint) error {
 						count := 0
 						return func(
 							g *graph.Graph, nidx graph.NodeIndex,
-							children map[string][]graph.NodeIndex, bp blueprint.Blueprint) error {
+							children map[string][]graph.NodeIndex, bp *blueprint.Blueprint) error {
 
 							count++
 							if count == 1 {
@@ -290,10 +290,10 @@ func TestBuild(t *testing.T) {
 				"X": &tr.RuleMock{
 					Prep: func() func(
 						g *graph.Graph, nidx graph.NodeIndex,
-						children map[string][]graph.NodeIndex, bp blueprint.Blueprint) error {
+						children map[string][]graph.NodeIndex, bp *blueprint.Blueprint) error {
 						return func(
 							g *graph.Graph, nidx graph.NodeIndex,
-							children map[string][]graph.NodeIndex, bp blueprint.Blueprint) error {
+							children map[string][]graph.NodeIndex, bp *blueprint.Blueprint) error {
 
 							return fmt.Errorf("%w", rule.ErrPreparation)
 						}
@@ -305,7 +305,7 @@ func TestBuild(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			bps := make([]blueprint.Blueprint, len(c.blueprints))
+			bps := make([]*blueprint.Blueprint, len(c.blueprints))
 			for i, bp := range c.blueprints {
 				var err error
 				if bps[i], err = blueprint.Parse([]byte(bp)); err != nil {

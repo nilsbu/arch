@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	bps := make([]blueprint.Blueprint, len(os.Args)-1)
+	bps := make([]*blueprint.Blueprint, len(os.Args)-1)
 	for i := range bps {
 		if file, err := os.ReadFile(os.Args[i+1]); err != nil {
 			fmt.Println(err)
