@@ -15,11 +15,11 @@ var ErrInvalidBlueprint = errors.New("invalid blueprint")
 
 var ErrNoSolution = errors.New("no solution found")
 
-func Build(bps []*blueprint.Blueprint, check Check, r *Resolver) (*graph.Graph, error) {
+func Build(bps []*blueprint.Blueprint, check Check, resolver *Resolver) (*graph.Graph, error) {
 	choicess := make([]*choices, len(bps))
 	ns := &ns{}
 	for i, bp := range bps {
-		if choices, err := calcChoices(bp, "Root", r); err != nil {
+		if choices, err := calcChoices(bp, "Root", resolver); err != nil {
 			return nil, err
 		} else {
 			choicess[i] = choices
@@ -35,7 +35,7 @@ func Build(bps []*blueprint.Blueprint, check Check, r *Resolver) (*graph.Graph, 
 		for j, choices := range choicess {
 
 			gs[j] = graph.New(nil)
-			if err := parse(gs[j], graph.NodeIndex{}, choices.get(is[j]), r); errors.Is(err, rule.ErrInvalidGraph) {
+			if err := parse(gs[j], graph.NodeIndex{}, choices.get(is[j]), resolver); errors.Is(err, rule.ErrInvalidGraph) {
 				ok = false
 				break
 			} else if err != nil {
@@ -56,15 +56,15 @@ func Build(bps []*blueprint.Blueprint, check Check, r *Resolver) (*graph.Graph, 
 	return nil, ErrNoSolution
 }
 
-func parse(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolver) error {
+func parse(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, resolver *Resolver) error {
 	if choice.bp != nil {
-		setName(g, nidx, choice, r)
-		rule := r.Keys[choice.bp.Values(r.Name)[0]]
+		setName(g, nidx, choice, resolver)
+		rule := resolver.Keys[choice.bp.Values(resolver.Name)[0]]
 		return rule.PrepareGraph(g, nidx, map[string][]graph.NodeIndex{}, choice.bp)
 	} else if choice.children[0].bp == nil {
-		return parse(g, nidx, choice.children[0], r)
+		return parse(g, nidx, choice.children[0], resolver)
 	} else {
-		return parseBlock(g, nidx, choice, r)
+		return parseBlock(g, nidx, choice, resolver)
 	}
 }
 
@@ -73,13 +73,13 @@ func setName(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolver) 
 	node.Properties["name"] = choice.bp.Values(r.Name)[0]
 }
 
-func parseBlock(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolver) error {
-	setName(g, nidx, choice.children[0], r)
+func parseBlock(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, resolver *Resolver) error {
+	setName(g, nidx, choice.children[0], resolver)
 	nidxs := map[string][]graph.NodeIndex{}
 	namedChoices := map[string][]*bpNode{}
 	name := g.Node(nidx).Properties["name"].(string)
-	rule := r.Keys[name]
-	names := rule.ChildParams()
+	r := resolver.Keys[name]
+	names := r.ChildParams()
 	for i, child := range choice.children[1:] {
 		for _, grandchild := range child.children {
 			gcnidx, _ := g.Add(nidx)
@@ -89,13 +89,13 @@ func parseBlock(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolve
 		}
 	}
 
-	if err := rule.PrepareGraph(g, nidx, nidxs, choice.children[0].bp); err != nil {
+	if err := r.PrepareGraph(g, nidx, nidxs, choice.children[0].bp); err != nil {
 		return fmt.Errorf("couldn't create node of type '%v': %w", name, err)
 	}
 
 	for name, children := range nidxs {
 		for i, child := range children {
-			if err := parse(g, child, namedChoices[name][i], r); err != nil {
+			if err := parse(g, child, namedChoices[name][i], resolver); err != nil {
 				return err
 			}
 		}
