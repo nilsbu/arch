@@ -102,25 +102,33 @@ func (r Corridor) PrepareGraph(
 	}
 }
 
-type TwoRooms struct{}
+type RoomLine struct{}
 
-func (r TwoRooms) ChildParams() []string {
+func (r RoomLine) ChildParams() []string {
 	return []string{"rooms"}
 }
 
-func (r TwoRooms) PrepareGraph(
+func (r RoomLine) PrepareGraph(
 	g *graph.Graph,
 	nidx graph.NodeIndex,
 	children map[string][]graph.NodeIndex,
 	bp *blueprint.Blueprint,
 ) error {
-	if err := area.Split(g, nidx, children["rooms"], []float64{.5}, RoomOrientation(g, nidx)); err != nil {
-		return err
-	} else if err := area.CreateDoor(g, children["rooms"][0], children["rooms"][1], .5); err != nil {
-		return err
-	} else {
-		return InheritEdges(g, nidx)
+	cnidxs := children["rooms"]
+	at := make([]float64, len(cnidxs)-1)
+	for i := range at {
+		at[i] = float64(i+1) / float64(len(cnidxs))
 	}
+	if err := area.Split(g, nidx, cnidxs, at, RoomOrientation(g, nidx)); err != nil {
+		return err
+	}
+	for i := range at {
+		if err := area.CreateDoor(g, cnidxs[i], cnidxs[i+1], .5); err != nil {
+			return err
+		}
+	}
+
+	return InheritEdges(g, nidx)
 }
 
 type Room struct{}

@@ -37,7 +37,7 @@ func buildArchitecture() error {
 		Keys: map[string]rule.Rule{
 			"House":    rule.House{},
 			"Corridor": rule.Corridor{},
-			"TwoRooms": rule.TwoRooms{},
+			"RoomLine": rule.RoomLine{},
 			"Room":     rule.Room{},
 			"NOP":      rule.NOP{},
 		},

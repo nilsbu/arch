@@ -7,17 +7,18 @@
     },
     "Corridor": {
         "@rule": "Corridor",
-        "left": ["TwoRooms2", "Room", "TwoRooms", "Room"],
-        "right": ["TwoRooms2", "Room"],
+        "left": ["NRooms", "NRooms", "NRooms", "NRooms"],
+        "right": ["NRooms", "NRooms"],
         "corridor": "Room"
     },
+    "NRooms": ["ThreeRooms", "TwoRooms", "Room"],
     "TwoRooms": {
-        "@rule": "TwoRooms",
+        "@rule": "RoomLine",
         "rooms": ["Room", "Room"]
     },
-    "TwoRooms2": {
-        "@rule": "TwoRooms",
-        "rooms": ["TwoRooms", "Room"]
+    "ThreeRooms": {
+        "@rule": "RoomLine",
+        "rooms": ["Room", "Room", "Room"]
     },
     "Room": {
         "@rule": "Room"
