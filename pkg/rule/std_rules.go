@@ -65,7 +65,7 @@ func (r Corridor) PrepareGraph(
 		children["right"][0],
 	}
 
-	roomOrientation := area.Turn(area.GetDirection(g, nidx, a.Edges[0]), 180)
+	roomOrientation := RoomOrientation(g, nidx)
 	var roomWidth int
 	if roomOrientation == area.Up || roomOrientation == area.Down {
 		roomWidth = rect.Y1 - rect.Y0 + 1
@@ -112,8 +112,7 @@ func (r TwoRooms) PrepareGraph(
 	children map[string][]graph.NodeIndex,
 	bp *blueprint.Blueprint,
 ) error {
-	roomOrientation := area.Turn(area.GetDirection(g, nidx, g.Node(nidx).Edges[0]), 180)
-	if err := area.Split(g, nidx, children["rooms"], []float64{.5}, roomOrientation); err != nil {
+	if err := area.Split(g, nidx, children["rooms"], []float64{.5}, RoomOrientation(g, nidx)); err != nil {
 		return err
 	} else {
 		return area.CreateDoor(g, children["rooms"][0], children["rooms"][1], .5)
