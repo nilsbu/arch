@@ -9,11 +9,17 @@ import (
 	"github.com/nilsbu/arch/pkg/graph"
 )
 
+func fillNodes(g *graph.Graph, base graph.Properties, n int) {
+	g.Node(graph.NodeIndex{}).Properties = base
+	for i := 0; i < n; i++ {
+		g.Add(graph.NodeIndex{})
+	}
+}
+
 func TestSplit(t *testing.T) {
 	for _, c := range []struct {
 		name      string
-		base      *area.AreaNode
-		into      []*area.AreaNode
+		base      graph.Properties
 		at        []float64
 		direction area.Direction
 		out       []area.Rectangle
@@ -21,23 +27,21 @@ func TestSplit(t *testing.T) {
 	}{
 		{
 			"len(into) != len(at) + 1",
-			&area.AreaNode{Properties: graph.Properties{
+			graph.Properties{
 				"rect": area.Rectangle{2, 3, 4, 5},
-			}},
-			[]*area.AreaNode{{Properties: graph.Properties{}}},
+			},
 			[]float64{0.2},
 			area.Up,
-			[]area.Rectangle{{2, 3, 4, 5}},
+			[]area.Rectangle{},
 			area.ErrInvalidSplit,
 		},
 		// TODO with invalid Direction
 		// TODO with at <0 or >1
 		{
 			"one split copies rect",
-			&area.AreaNode{Properties: graph.Properties{
+			graph.Properties{
 				"rect": area.Rectangle{2, 3, 4, 5},
-			}},
-			[]*area.AreaNode{{Properties: graph.Properties{}}},
+			},
 			[]float64{},
 			area.Up,
 			[]area.Rectangle{{2, 3, 4, 5}},
@@ -45,12 +49,8 @@ func TestSplit(t *testing.T) {
 		},
 		{
 			"split upwards in the middle",
-			&area.AreaNode{Properties: graph.Properties{
+			graph.Properties{
 				"rect": area.Rectangle{2, 0, 4, 6},
-			}},
-			[]*area.AreaNode{
-				{Properties: graph.Properties{}},
-				{Properties: graph.Properties{}},
 			},
 			[]float64{.5},
 			area.Up,
@@ -59,13 +59,8 @@ func TestSplit(t *testing.T) {
 		},
 		{
 			"split downwards twice",
-			&area.AreaNode{Properties: graph.Properties{
+			graph.Properties{
 				"rect": area.Rectangle{2, 0, 4, 10},
-			}},
-			[]*area.AreaNode{
-				{Properties: graph.Properties{}},
-				{Properties: graph.Properties{}},
-				{Properties: graph.Properties{}},
 			},
 			[]float64{.3, .8},
 			area.Down,
@@ -74,13 +69,8 @@ func TestSplit(t *testing.T) {
 		},
 		{
 			"split right with one of size zero",
-			&area.AreaNode{Properties: graph.Properties{
+			graph.Properties{
 				"rect": area.Rectangle{2, 0, 12, 77},
-			}},
-			[]*area.AreaNode{
-				{Properties: graph.Properties{}},
-				{Properties: graph.Properties{}},
-				{Properties: graph.Properties{}},
 			},
 			[]float64{.4, .4},
 			area.Right,
@@ -89,14 +79,8 @@ func TestSplit(t *testing.T) {
 		},
 		{
 			"split left thrice",
-			&area.AreaNode{Properties: graph.Properties{
+			graph.Properties{
 				"rect": area.Rectangle{2, 0, 12, 77},
-			}},
-			[]*area.AreaNode{
-				{Properties: graph.Properties{}},
-				{Properties: graph.Properties{}},
-				{Properties: graph.Properties{}},
-				{Properties: graph.Properties{}},
 			},
 			[]float64{.2, .4, .6},
 			area.Left,
@@ -105,23 +89,22 @@ func TestSplit(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			if err := area.Split(c.base, c.into, c.at, c.direction); err != nil && c.err == nil {
+			g := graph.New(nil)
+			fillNodes(g, c.base, len(c.out))
+			if err := area.Split(g, graph.NodeIndex{}, g.Children(graph.NodeIndex{}), c.at, c.direction); err != nil && c.err == nil {
 				t.Error("unexpected error:", err)
 			} else if err == nil && c.err != nil {
 				t.Error("expected error but none ocurred")
 			} else if !errors.Is(err, c.err) {
 				t.Error("wrong type of error")
 			} else if err == nil {
-				if len(c.out) != len(c.into) {
-					t.Fatalf("expected rects = %v, received = %v", len(c.out), len(c.into))
-				} else {
-					for i, out := range c.out {
-						actual := c.into[i].GetRect()
-						if !reflect.DeepEqual(out, actual) {
-							t.Errorf("rect %v, expect %v, actual %v", i, out, actual)
-						}
-					}
+				children := g.Children(graph.NodeIndex{})
+				for i, out := range c.out {
 
+					actual := (*area.AreaNode)(g.Node(children[i])).GetRect()
+					if !reflect.DeepEqual(out, actual) {
+						t.Errorf("rect %v, expect %v, actual %v", i, out, actual)
+					}
 				}
 			}
 		})

@@ -3,6 +3,8 @@ package area
 import (
 	"errors"
 	"fmt"
+
+	"github.com/nilsbu/arch/pkg/graph"
 )
 
 // ErrInvalidSplit is returned when an AreaNode cannot be split.
@@ -10,13 +12,13 @@ var ErrInvalidSplit = errors.New("invalid split")
 
 // Split splits an area into smaller areas.
 // The resulting areas are strung together either horizontally or vertically.
-// Their nodes must already exist and are passed as "into". The original node, named "base", may occur in the resulting
-// ares, thus shrinking it.
+// Their nodes must already exist and are passed as "into". The original node, named "base", may be reused in "into",
+// thus shrinking it.
 // "direction" is the direction along which the areas are aligned. E.g. if Down is chosen, the first resulting area is
 // the hightest (smallest y value), and the other ones follow below it.
 // "at" is a sequence of numbers in range [0, 1] determining where along the splitting axis the borders between the
 // areas lie.
-func Split(base *AreaNode, into []*AreaNode, at []float64, direction Direction) error {
+func Split(g *graph.Graph, base graph.NodeIndex, into []graph.NodeIndex, at []float64, direction Direction) error {
 	if len(into) != len(at)+1 {
 		return fmt.Errorf("%w: tried to split into %v nodes with %v dividers", ErrInvalidSplit, len(into), len(at))
 	}
@@ -24,9 +26,9 @@ func Split(base *AreaNode, into []*AreaNode, at []float64, direction Direction) 
 	ats = append(ats, at...)
 	ats = append(ats, 1)
 
-	flipped := flip(base.GetRect(), direction)
+	flipped := flip((*AreaNode)(g.Node(base)).GetRect(), direction)
 	for i := 0; i < len(ats)-1; i++ {
-		into[i].SetRect(flip(crop(flipped, ats[i], ats[i+1]), direction))
+		(*AreaNode)(g.Node(into[i])).SetRect(flip(crop(flipped, ats[i], ats[i+1]), direction))
 	}
 
 	return nil

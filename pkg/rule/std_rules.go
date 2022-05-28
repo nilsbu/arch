@@ -30,12 +30,13 @@ func (r House) PrepareGraph(
 		data[3]++
 		a.SetRect(area.Rectangle{X0: data[0], Y0: data[1], X1: data[2], Y1: data[3]})
 
-		chi := make([]*area.AreaNode, 2)
-		chi[0] = (*area.AreaNode)(g.Node(children["interior"][0]))
-		chi[1] = (*area.AreaNode)(g.Node(children["exterior"][0]))
+		nidxs := []graph.NodeIndex{
+			children["interior"][0],
+			children["exterior"][0],
+		}
 
 		h := float64(data[3] - data[1])
-		if err := area.Split(a, chi, []float64{(h - 1) / h}, area.Down); err != nil {
+		if err := area.Split(g, nidx, nidxs, []float64{(h - 1) / h}, area.Down); err != nil {
 			return err
 		} else {
 			return area.CreateDoor(g, children["interior"][0], children["exterior"][0], .5)
@@ -58,10 +59,11 @@ func (r Corridor) PrepareGraph(
 	a := (*area.AreaNode)(g.Node(nidx))
 	rect := a.GetRect()
 
-	chi := make([]*area.AreaNode, 3)
-	chi[0] = (*area.AreaNode)(g.Node(children["left"][0]))
-	chi[1] = (*area.AreaNode)(g.Node(children["corridor"][0]))
-	chi[2] = (*area.AreaNode)(g.Node(children["right"][0]))
+	nidxs := []graph.NodeIndex{
+		children["left"][0],
+		children["corridor"][0],
+		children["right"][0],
+	}
 
 	roomOrientation := area.Turn(area.GetDirection(g, nidx, a.Edges[0]), -90)
 	var roomWidth int
@@ -77,19 +79,15 @@ func (r Corridor) PrepareGraph(
 		.5 + (corridorWidth+2)/float64(roomWidth)/2,
 	}
 
-	if err := area.Split(a, chi, at, roomOrientation); err != nil {
+	if err := area.Split(g, nidx, nidxs, at, roomOrientation); err != nil {
 		return err
 	} else {
 		for _, side := range []string{"left", "right"} {
-			cdren := make([]*area.AreaNode, len(children[side]))
-			for i, cnidx := range children[side] {
-				cdren[i] = (*area.AreaNode)(g.Node(cnidx))
-			}
 			at := make([]float64, len(children[side])-1)
 			for i := range at {
 				at[i] = float64(i+1) / float64(len(children[side]))
 			}
-			if err := area.Split((*area.AreaNode)(g.Node(children[side][0])), cdren, at, area.Turn(roomOrientation, 90)); err != nil {
+			if err := area.Split(g, children[side][0], children[side], at, area.Turn(roomOrientation, 90)); err != nil {
 				return err
 			}
 			for _, cnidx := range children[side] {
@@ -114,13 +112,8 @@ func (r TwoRooms) PrepareGraph(
 	children map[string][]graph.NodeIndex,
 	bp *blueprint.Blueprint,
 ) error {
-	a := (*area.AreaNode)(g.Node(nidx))
-	chi := make([]*area.AreaNode, len(children["rooms"]))
-	for i, nidx := range children["rooms"] {
-		chi[i] = (*area.AreaNode)(g.Node(nidx))
-	}
-	roomOrientation := area.Turn(area.GetDirection(g, nidx, a.Edges[0]), 180)
-	if err := area.Split(a, chi, []float64{.5}, roomOrientation); err != nil {
+	roomOrientation := area.Turn(area.GetDirection(g, nidx, g.Node(nidx).Edges[0]), 180)
+	if err := area.Split(g, nidx, children["rooms"], []float64{.5}, roomOrientation); err != nil {
 		return err
 	} else {
 		return area.CreateDoor(g, children["rooms"][0], children["rooms"][1], .5)
