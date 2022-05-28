@@ -65,12 +65,12 @@ func (r Corridor) PrepareGraph(
 		children["right"][0],
 	}
 
-	roomOrientation := area.Turn(area.GetDirection(g, nidx, a.Edges[0]), -90)
+	roomOrientation := area.Turn(area.GetDirection(g, nidx, a.Edges[0]), 180)
 	var roomWidth int
 	if roomOrientation == area.Up || roomOrientation == area.Down {
-		roomWidth = rect.X1 - rect.X0 + 1
-	} else {
 		roomWidth = rect.Y1 - rect.Y0 + 1
+	} else {
+		roomWidth = rect.X1 - rect.X0 + 1
 	}
 
 	corridorWidth := 3.
@@ -79,7 +79,7 @@ func (r Corridor) PrepareGraph(
 		.5 + (corridorWidth+2)/float64(roomWidth)/2,
 	}
 
-	if err := area.Split(g, nidx, nidxs, at, roomOrientation); err != nil {
+	if err := area.Split(g, nidx, nidxs, at, area.Turn(roomOrientation, 90)); err != nil {
 		return err
 	} else {
 		for _, side := range []string{"left", "right"} {
@@ -87,7 +87,7 @@ func (r Corridor) PrepareGraph(
 			for i := range at {
 				at[i] = float64(i+1) / float64(len(children[side]))
 			}
-			if err := area.Split(g, children[side][0], children[side], at, area.Turn(roomOrientation, 90)); err != nil {
+			if err := area.Split(g, children[side][0], children[side], at, roomOrientation); err != nil {
 				return err
 			}
 			for _, cnidx := range children[side] {
