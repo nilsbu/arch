@@ -38,8 +38,10 @@ func (r House) PrepareGraph(
 		h := float64(data[3] - data[1])
 		if err := area.Split(g, nidx, nidxs, []float64{(h - 1) / h}, area.Down); err != nil {
 			return err
+		} else if err := area.CreateDoor(g, children["interior"][0], children["exterior"][0], .5); err != nil {
+			return err
 		} else {
-			return area.CreateDoor(g, children["interior"][0], children["exterior"][0], .5)
+			return PassOnEdges(g, nidx)
 		}
 	}
 }
@@ -96,7 +98,7 @@ func (r Corridor) PrepareGraph(
 				}
 			}
 		}
-		return nil
+		return PassOnEdges(g, nidx)
 	}
 }
 
@@ -114,8 +116,10 @@ func (r TwoRooms) PrepareGraph(
 ) error {
 	if err := area.Split(g, nidx, children["rooms"], []float64{.5}, RoomOrientation(g, nidx)); err != nil {
 		return err
+	} else if err := area.CreateDoor(g, children["rooms"][0], children["rooms"][1], .5); err != nil {
+		return err
 	} else {
-		return area.CreateDoor(g, children["rooms"][0], children["rooms"][1], .5)
+		return PassOnEdges(g, nidx)
 	}
 }
 
