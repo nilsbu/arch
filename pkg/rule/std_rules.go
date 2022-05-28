@@ -41,7 +41,7 @@ func (r House) PrepareGraph(
 		} else if err := area.CreateDoor(g, children["interior"][0], children["exterior"][0], .5); err != nil {
 			return err
 		} else {
-			return PassOnEdges(g, nidx)
+			return InheritEdges(g, nidx)
 		}
 	}
 }
@@ -98,7 +98,7 @@ func (r Corridor) PrepareGraph(
 				}
 			}
 		}
-		return PassOnEdges(g, nidx)
+		return InheritEdges(g, nidx)
 	}
 }
 
@@ -119,7 +119,7 @@ func (r TwoRooms) PrepareGraph(
 	} else if err := area.CreateDoor(g, children["rooms"][0], children["rooms"][1], .5); err != nil {
 		return err
 	} else {
-		return PassOnEdges(g, nidx)
+		return InheritEdges(g, nidx)
 	}
 }
 
