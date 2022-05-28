@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
+	"time"
 
 	"github.com/nilsbu/arch/pkg/blueprint"
 	"github.com/nilsbu/arch/pkg/csp"
@@ -13,6 +15,8 @@ import (
 )
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
+
 	if err := buildArchitecture(); err != nil {
 		fmt.Println(err)
 	}
@@ -39,7 +43,7 @@ func buildArchitecture() error {
 		},
 	}
 
-	if g, err := merge.Build(bps, &csp.Centipede{}, resolver); err != nil {
+	if g, err := merge.Build(bps, &csp.Centipede{}, resolver, merge.RandomOrder); err != nil {
 		return err
 	} else if tiles, err := draw.Draw(g); err != nil {
 		return err

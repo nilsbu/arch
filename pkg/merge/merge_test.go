@@ -389,7 +389,7 @@ func TestBuild(t *testing.T) {
 				}
 			}
 
-			if graph, err := merge.Build(bps, c.check, c.resolver); err != nil && c.err == nil {
+			if graph, err := merge.Build(bps, c.check, c.resolver, merge.InOrder); err != nil && c.err == nil {
 				t.Errorf("unexpected error: %v", err)
 			} else if err == nil && c.err != nil {
 				t.Errorf("expected error but non ocurred")

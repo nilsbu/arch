@@ -15,20 +15,19 @@ var ErrInvalidBlueprint = errors.New("invalid blueprint")
 
 var ErrNoSolution = errors.New("no solution found")
 
-func Build(bps []*blueprint.Blueprint, check Check, resolver *Resolver) (*graph.Graph, error) {
+func Build(bps []*blueprint.Blueprint, check Check, resolver *Resolver, shuffle Shuffle) (*graph.Graph, error) {
 	choicess := make([]*choices, len(bps))
-	ns := &ns{}
+	ns := make([]int, len(bps))
 	for i, bp := range bps {
 		if choices, err := calcChoices(bp, "Root", resolver); err != nil {
 			return nil, err
 		} else {
 			choicess[i] = choices
-			ns.add(choicess[i].n())
+			ns[i] = choicess[i].n()
 		}
 	}
 
-	for i := 0; i < ns.total; i++ {
-		is := ns.get(i)
+	for _, is := range shuffle(ns) {
 
 		gs := make([]*graph.Graph, len(choicess))
 		ok := true
@@ -101,31 +100,4 @@ func parseBlock(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, resolver *
 		}
 	}
 	return nil
-}
-
-// ns handles the iteration over multiple choices.
-type ns struct {
-	// TODO this is ugly, replace it by something better
-	total int
-	ns    []int
-}
-
-func (ns *ns) add(n int) {
-	if ns.total == 0 {
-		ns.total = n
-	} else {
-		ns.total *= n
-	}
-	ns.ns = append(ns.ns, n)
-}
-
-func (ns *ns) get(i int) []int {
-	is := make([]int, len(ns.ns))
-	exp := 1
-	for j, n := range ns.ns {
-		is[j] = (i / exp) % n
-		exp *= n
-	}
-
-	return is
 }
