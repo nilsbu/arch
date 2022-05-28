@@ -6,8 +6,22 @@ import (
 	"fmt"
 )
 
+// ErrInvalidScript is returned when a script isn't valid.
 var ErrInvalidScript = errors.New("blueprint script is invalid")
 
+// A Blueprint describes an aspect of a level.
+// Properties of a Blueprint are organized in two ways: children and values. Children are themselves blueprints.
+// Values are of type []string. They both are accessibly via their property name. All names of children start with '*'
+// and none of the names of values do.
+//
+// Through the children, a tree structure is defined. Each node may have an arbitrary number of children and the
+// tree may have any height.
+//
+// Properties have visibility beyond the blueprint they are defined in. If a property is queried in one blueprint but
+// no property of that name has been defined there, the parents are recursively called until a property of that name is
+// found.
+//
+// Properties can get parsed from files.
 type Blueprint struct {
 	parent   *Blueprint
 	values   map[string][]string
@@ -16,7 +30,10 @@ type Blueprint struct {
 
 // TODO Properties() and Children() don't contain those reachable through parent
 
-// TODO document
+// Parse creates a Blueprint from the content of a file.
+//
+// An *json.InvalidUnmarshalError is returned when the file is no valid JSON.
+// An ErrInvalidScript is returned when the content isn't valid.
 func Parse(data []byte) (*Blueprint, error) {
 	var raw map[string]interface{}
 	err := json.Unmarshal(data, &raw)
@@ -74,6 +91,8 @@ func (b *Blueprint) parseValues(raw interface{}, k string, valueCounter *int) ([
 	}
 }
 
+// Values returnes the values associated with a property.
+// If the queried Blueprint doesn't contain that property, the parents are called recursively.
 func (b *Blueprint) Values(property string) []string {
 	if values, ok := b.values[property]; ok {
 		return values
@@ -84,6 +103,9 @@ func (b *Blueprint) Values(property string) []string {
 	}
 }
 
+// Properties returns all the properties defined in the Blueprint, that have values as data.
+// Since Values() additionally does recursive calls, the list returned here doesn't match the properties that are
+// accessible through Values().
 func (b *Blueprint) Properties() []string {
 	properties := make([]string, len(b.values))
 	i := 0
@@ -94,6 +116,8 @@ func (b *Blueprint) Properties() []string {
 	return properties
 }
 
+// Child returnes the child associated with a property.
+// If the queried Blueprint doesn't contain that property, the parents are called recursively.
 func (b *Blueprint) Child(property string) *Blueprint {
 	if child, ok := b.children[property]; ok {
 		return child
@@ -104,6 +128,9 @@ func (b *Blueprint) Child(property string) *Blueprint {
 	}
 }
 
+// Children returns all the names of the children defined in the Blueprint.
+// Since Child() additionally does recursive calls, the list returned here doesn't match the properties that are
+// accessible through Child().
 func (b *Blueprint) Children() []string {
 	children := make([]string, len(b.children))
 	i := 0
