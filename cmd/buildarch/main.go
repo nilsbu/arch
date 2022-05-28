@@ -13,14 +13,18 @@ import (
 )
 
 func main() {
+	if err := buildArchitecture(); err != nil {
+		fmt.Println(err)
+	}
+}
+
+func buildArchitecture() error {
 	bps := make([]*blueprint.Blueprint, len(os.Args)-1)
 	for i := range bps {
 		if file, err := os.ReadFile(os.Args[i+1]); err != nil {
-			fmt.Println(err)
-			return
+			return err
 		} else if bps[i], err = blueprint.Parse(file); err != nil {
-			fmt.Println(err)
-			return
+			return err
 		}
 	}
 
@@ -36,10 +40,11 @@ func main() {
 	}
 
 	if g, err := merge.Build(bps, &csp.Centipede{}, resolver); err != nil {
-		fmt.Println(err)
+		return err
 	} else if tiles, err := draw.Draw(g); err != nil {
-		fmt.Println(err)
+		return err
 	} else {
 		render.Terminal(os.Stdout, tiles)
+		return nil
 	}
 }

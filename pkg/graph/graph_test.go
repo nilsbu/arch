@@ -2,7 +2,6 @@ package graph_test
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -407,7 +406,6 @@ func TestLinkANonExistent(t *testing.T) {
 	if _, err := g.Link(n0, graph.NodeIndex{1, 1}); err == nil {
 		t.Error("expected error but none ocurred")
 	} else if !errors.Is(err, graph.ErrIllegalAction) {
-		fmt.Println(err)
 		t.Error("link error must be an 'ErrIllegalAction'")
 	}
 }
@@ -418,7 +416,6 @@ func TestLinkBNonExistent(t *testing.T) {
 	if _, err := g.Link(graph.NodeIndex{1, 1}, n0); err == nil {
 		t.Error("expected error but none ocurred")
 	} else if !errors.Is(err, graph.ErrIllegalAction) {
-		fmt.Println(err)
 		t.Error("link error must be an 'ErrIllegalAction'")
 	}
 }
@@ -429,7 +426,6 @@ func TestLinkWithOwnParent(t *testing.T) {
 	if _, err := g.Link(graph.NodeIndex{}, n0); err == nil {
 		t.Error("expected error but none ocurred")
 	} else if !errors.Is(err, graph.ErrIllegalAction) {
-		fmt.Println(err)
 		t.Error("link error must be an 'ErrIllegalAction'")
 	}
 }
@@ -443,7 +439,6 @@ func TestLinkAfterInheritance(t *testing.T) {
 	if _, err := g.Link(n0, n1); err == nil {
 		t.Error("expected error but none ocurred")
 	} else if !errors.Is(err, graph.ErrIllegalAction) {
-		fmt.Println(err)
 		t.Error("link error must be an 'ErrIllegalAction'")
 	}
 }
