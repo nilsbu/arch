@@ -53,7 +53,7 @@ func getGroup(bp *blueprint.Blueprint, resolver *Resolver) (group, error) {
 		}}
 		rule := resolver.Keys[name[0]]
 		if rule == nil {
-			return nil, ErrUnknownKey
+			return nil, fmt.Errorf("%w: key '%v' is not defined", ErrInvalidBlueprint, name[0])
 		}
 		for _, param := range rule.ChildParams() {
 			if choice, err := calcConjunction(bp, param, resolver); err != nil {

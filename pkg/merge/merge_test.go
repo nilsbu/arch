@@ -59,7 +59,7 @@ func TestBuild(t *testing.T) {
 				nidx graph.NodeIndex,
 				children map[string][]graph.NodeIndex,
 				bp *blueprint.Blueprint) error {
-				return merge.ErrUnknownKey
+				return merge.ErrInvalidBlueprint
 			},
 			},
 		},
@@ -80,6 +80,41 @@ func TestBuild(t *testing.T) {
 			func() *graph.Graph {
 				return nil
 			},
+			merge.ErrInvalidBlueprint,
+		},
+		{
+			"no @",
+			[]string{`{"Root":{}}`},
+			allOk, resolver,
+			func() *graph.Graph { return nil },
+			merge.ErrInvalidBlueprint,
+		},
+		{
+			"too many @",
+			[]string{`{"Root":{"@":["R","B"]}}`},
+			allOk, resolver,
+			func() *graph.Graph { return nil },
+			merge.ErrInvalidBlueprint,
+		},
+		{
+			"@ has unknown name",
+			[]string{`{"Root":{"@":"Whoami"}}`},
+			allOk, resolver,
+			func() *graph.Graph { return nil },
+			merge.ErrInvalidBlueprint,
+		},
+		{
+			"@ has unknown name in some depth",
+			[]string{`{"Root":"Next","Next":{"@":"1","a":{"@":"Whoami"}}}`},
+			allOk, resolver,
+			func() *graph.Graph { return nil },
+			merge.ErrInvalidBlueprint,
+		},
+		{
+			"@ has unknown name in some depth, no. 2",
+			[]string{`{"Root":"Next","Next":{"@":"1","a":"Huh"},"Huh":{"@":"Whoami"}}`},
+			allOk, resolver,
+			func() *graph.Graph { return nil },
 			merge.ErrInvalidBlueprint,
 		},
 		{
@@ -120,6 +155,13 @@ func TestBuild(t *testing.T) {
 				return g
 			},
 			nil,
+		},
+		{
+			"property 'a' required but not defined",
+			[]string{`{"Root":{"@":"1"}}`},
+			allOk, resolver,
+			func() *graph.Graph { return nil },
+			merge.ErrInvalidBlueprint,
 		},
 		{
 			"reject R in child",
@@ -169,6 +211,19 @@ func TestBuild(t *testing.T) {
 			nil,
 		},
 		{
+			"error in matching",
+			[]string{
+				`{"Root":[{"@":"1","a":{"@":"P"}}]}`,
+				`{"Root":[{"@":"1","a":{"@":"P"}}]}`,
+			},
+			checker(func(graphs []*graph.Graph) (bool, error) {
+				return false, merge.ErrInvalidBlueprint // TODO this is not the correct error
+			}),
+			resolver,
+			func() *graph.Graph { return nil },
+			merge.ErrInvalidBlueprint,
+		},
+		{
 			"different types of children",
 			[]string{
 				`{"Root":[
@@ -190,7 +245,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			"set properties for self and child",
-			[]string{`{"Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":{"@":"P"}}]}`},
+			[]string{`{"Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":"Param","Param":{"@":"P"}}]}`},
 			allOk,
 			with(resolver, map[string]rule.Rule{
 				"1": &tr.RuleMock{
@@ -280,6 +335,27 @@ func TestBuild(t *testing.T) {
 				return g
 			},
 			nil,
+		},
+		{
+			"reject all options",
+			[]string{`{"Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":{"@":"P"}}]}`},
+			allOk,
+			with(resolver, map[string]rule.Rule{
+				"1": &tr.RuleMock{
+					Params: []string{"a"},
+					Prep: func() func(
+						g *graph.Graph, nidx graph.NodeIndex,
+						children map[string][]graph.NodeIndex, bp *blueprint.Blueprint) error {
+						return func(
+							g *graph.Graph, nidx graph.NodeIndex,
+							children map[string][]graph.NodeIndex, bp *blueprint.Blueprint) error {
+							return rule.ErrInvalidGraph
+						}
+					}(),
+				},
+			}),
+			func() *graph.Graph { return nil },
+			merge.ErrNoSolution,
 		},
 		{
 			// this test was introduced because of a bug where PrepareGraph wasn't called on leafs

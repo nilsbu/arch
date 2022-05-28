@@ -82,13 +82,10 @@ func parseBlock(g *graph.Graph, nidx graph.NodeIndex, choice *bpNode, r *Resolve
 	names := rule.ChildParams()
 	for i, child := range choice.children[1:] {
 		for _, grandchild := range child.children {
-			if gcnidx, err := g.Add(nidx); err != nil {
-				return err
-			} else {
-				name := names[i]
-				namedChoices[name] = append(namedChoices[name], grandchild)
-				nidxs[name] = append(nidxs[name], gcnidx)
-			}
+			gcnidx, _ := g.Add(nidx)
+			name := names[i]
+			namedChoices[name] = append(namedChoices[name], grandchild)
+			nidxs[name] = append(nidxs[name], gcnidx)
 		}
 	}
 
