@@ -71,9 +71,9 @@ func (r Corridor) PrepareGraph(
 	roomOrientation := RoomOrientation(g, nidx)
 	var roomWidth int
 	if roomOrientation == area.Up || roomOrientation == area.Down {
-		roomWidth = rect.Y1 - rect.Y0 + 1
+		roomWidth = rect.X1 - rect.X0
 	} else {
-		roomWidth = rect.X1 - rect.X0 + 1
+		roomWidth = rect.Y1 - rect.Y0
 	}
 
 	corridorWidth := 3.
