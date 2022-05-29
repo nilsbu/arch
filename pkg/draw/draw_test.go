@@ -93,12 +93,12 @@ func TestDraw(t *testing.T) {
 			nil,
 		},
 		{
-			"render-walls disabled",
+			"render disabled",
 			func() *graph.Graph {
 				g := graph.New(nil)
 				node := (*area.AreaNode)(g.Node(graph.NodeIndex{}))
 				node.SetRect(area.Rectangle{X0: 0, Y0: 0, X1: 3, Y1: 3})
-				node.Properties["render-walls"] = false
+				node.Properties["render"] = false
 				return g
 			},
 			[][]world.Tile{

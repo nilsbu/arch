@@ -27,7 +27,7 @@ func draw(g *graph.Graph, nidx graph.NodeIndex, tiles *world.Tiles) error {
 	rect := a.GetRect()
 	if rect.X1 == 0 || rect.Y1 == 0 {
 		return fmt.Errorf("%w: rect for %v not set", ErrInvalidGraph, nidx)
-	} else if render, ok := a.Properties["render-walls"]; !ok || render.(bool) {
+	} else if render, ok := a.Properties["render"]; !ok || render.(bool) {
 		for x := rect.X0; x <= rect.X1; x++ {
 			tiles.Set(x, rect.Y0, world.Tile{Type: world.Wall})
 			tiles.Set(x, rect.Y1, world.Tile{Type: world.Wall})
@@ -39,8 +39,13 @@ func draw(g *graph.Graph, nidx graph.NodeIndex, tiles *world.Tiles) error {
 	}
 
 	for _, eidx := range a.Edges {
-		pos := (*area.DoorEdge)(g.Edge(eidx)).GetPos()
-		tiles.Set(pos.X, pos.Y, world.Tile{Type: world.Door})
+		door := (*area.DoorEdge)(g.Edge(eidx))
+		pos := door.GetPos()
+		if render, ok := door.Properties["render"]; !ok || render.(bool) {
+			tiles.Set(pos.X, pos.Y, world.Tile{Type: world.Door})
+		} else {
+			tiles.Set(pos.X, pos.Y, world.Tile{Type: world.Free})
+		}
 	}
 
 	for _, cnidx := range g.Children(nidx) {

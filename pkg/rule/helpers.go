@@ -53,3 +53,26 @@ func passOn(
 	return fmt.Errorf("%w: door %v at [%v, %v] cannot be assigned to child area", ErrInvalidGraph,
 		eidx, door.X, door.Y)
 }
+
+// SetWall enables or disables walls for an area.
+// Additionally it checks for doors to neighbouring areas and disables rendering for them if both areas have walls
+// disabled.
+func SetWall(g *graph.Graph, nidx graph.NodeIndex, visible bool) {
+	node := g.Node(nidx)
+	node.Properties["render"] = visible
+	for _, eidx := range node.Edges {
+		// assume without check that nidx is on the lowest layer
+		nodes := g.Nodes(eidx)
+		var onidx graph.NodeIndex
+		if nodes[0][len(nodes[0])-1] == nidx {
+			onidx = nodes[1][len(nodes[1])-1]
+		} else {
+			onidx = nodes[0][len(nodes[0])-1]
+		}
+		other := g.Node(onidx)
+		r, ok := other.Properties["render"]
+		otherVisible := !ok || r.(bool)
+		wallVisible := visible || otherVisible
+		g.Edge(eidx).Properties["render"] = wallVisible
+	}
+}

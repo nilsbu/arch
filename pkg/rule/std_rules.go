@@ -21,7 +21,7 @@ func (r House) PrepareGraph(
 	bp *blueprint.Blueprint,
 ) error {
 	a := (*area.AreaNode)(g.Node(nidx))
-	a.Properties["render-walls"] = false
+	a.Properties["render"] = false
 	data := []int{}
 	if err := json.Unmarshal([]byte(bp.Values("rect")[0]), &data); err != nil {
 		return err
@@ -58,7 +58,7 @@ func (r Corridor) PrepareGraph(
 	children map[string][]graph.NodeIndex,
 	bp *blueprint.Blueprint,
 ) error {
-	g.Node(nidx).Properties["render-walls"] = false
+	g.Node(nidx).Properties["render"] = false
 	a := (*area.AreaNode)(g.Node(nidx))
 	rect := a.GetRect()
 
@@ -115,7 +115,7 @@ func (r RoomLine) PrepareGraph(
 	children map[string][]graph.NodeIndex,
 	bp *blueprint.Blueprint,
 ) error {
-	g.Node(nidx).Properties["render-walls"] = false
+	g.Node(nidx).Properties["render"] = false
 	cnidxs := children["rooms"]
 	at := make([]float64, len(cnidxs)-1)
 	for i := range at {
@@ -169,6 +169,7 @@ func (r Room) PrepareGraph(
 	children map[string][]graph.NodeIndex,
 	bp *blueprint.Blueprint,
 ) error {
+	SetWall(g, nidx, true)
 	return nil
 }
 
@@ -184,6 +185,6 @@ func (r NOP) PrepareGraph(
 	children map[string][]graph.NodeIndex,
 	bp *blueprint.Blueprint,
 ) error {
-	g.Node(nidx).Properties["render-walls"] = false
+	SetWall(g, nidx, false)
 	return nil
 }
