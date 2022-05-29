@@ -1,15 +1,21 @@
 {
     "Root": {
         "@rule": "House",
-        "interior": "Corridor",
+        "interior": {"@rule": "Frame", "content": "MainCorridor"},
         "exterior": {"@rule": "NOP"},
-        "rect": "[0,0,40,20]"
+        "rect": "[0,0,80,40]"
     },
-    "Corridor": {
+    "MainCorridor": {
         "@rule": "Corridor",
         "left": ["NRooms", "NRooms", "NRooms", "NRooms"],
+        "right": ["NRooms", "SideCorridor"],
+        "corridor": "NOP"
+    },
+    "SideCorridor": {
+        "@rule": "Corridor",
+        "left": ["NRooms", "NRooms"],
         "right": ["NRooms", "NRooms"],
-        "corridor": "Room"
+        "corridor": "NOP"
     },
     "NRooms": ["ThreeRooms", "TwoRooms", "Room"],
     "TwoRooms": {
@@ -22,5 +28,8 @@
     },
     "Room": {
         "@rule": "Room"
+    },
+    "NOP": {
+        "@rule": "NOP"
     }
 }
