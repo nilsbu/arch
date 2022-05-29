@@ -58,6 +58,7 @@ func (r Corridor) PrepareGraph(
 	children map[string][]graph.NodeIndex,
 	bp *blueprint.Blueprint,
 ) error {
+	g.Node(nidx).Properties["render-walls"] = false
 	a := (*area.AreaNode)(g.Node(nidx))
 	rect := a.GetRect()
 
@@ -114,6 +115,7 @@ func (r RoomLine) PrepareGraph(
 	children map[string][]graph.NodeIndex,
 	bp *blueprint.Blueprint,
 ) error {
+	g.Node(nidx).Properties["render-walls"] = false
 	cnidxs := children["rooms"]
 	at := make([]float64, len(cnidxs)-1)
 	for i := range at {
@@ -126,6 +128,30 @@ func (r RoomLine) PrepareGraph(
 		if err := area.CreateDoor(g, cnidxs[i], cnidxs[i+1], .5); err != nil {
 			return err
 		}
+	}
+
+	return InheritEdges(g, nidx)
+}
+
+type Frame struct{}
+
+func (r Frame) ChildParams() []string {
+	return []string{"content"}
+}
+
+func (r Frame) PrepareGraph(
+	g *graph.Graph,
+	nidx graph.NodeIndex,
+	children map[string][]graph.NodeIndex,
+	bp *blueprint.Blueprint,
+) error {
+	cnidxs := children["content"]
+	if len(cnidxs) != 1 {
+		return ErrInvalidGraph
+	}
+
+	if err := area.Split(g, nidx, cnidxs, []float64{}, RoomOrientation(g, nidx)); err != nil {
+		return err
 	}
 
 	return InheritEdges(g, nidx)

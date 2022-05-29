@@ -38,6 +38,7 @@ func buildArchitecture() error {
 			"House":    rule.House{},
 			"Corridor": rule.Corridor{},
 			"RoomLine": rule.RoomLine{},
+			"Frame":    rule.Frame{},
 			"Room":     rule.Room{},
 			"NOP":      rule.NOP{},
 		},

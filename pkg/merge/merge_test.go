@@ -62,6 +62,15 @@ func TestBuild(t *testing.T) {
 				return merge.ErrInvalidBlueprint
 			},
 			},
+			"Leaf": &tr.RuleMock{Prep: func(
+				g *graph.Graph,
+				nidx graph.NodeIndex,
+				children map[string][]graph.NodeIndex,
+				bp *blueprint.Blueprint) error {
+				g.Node(nidx).Properties["leaf"] = true
+				return nil
+			},
+			},
 		},
 	}
 
@@ -378,6 +387,23 @@ func TestBuild(t *testing.T) {
 			}),
 			func() *graph.Graph { return nil },
 			rule.ErrPreparation,
+		},
+		{
+			"set property on leaf",
+			[]string{`{"Root":{"@":"1","a":"X"},"X":{"@":"Leaf"}}`},
+			allOk,
+			resolver,
+			func() *graph.Graph {
+				g := graph.New(nil)
+				node := g.Node(graph.NodeIndex{})
+				node.Properties["name"] = "1"
+				nidx, _ := g.Add(graph.NodeIndex{})
+				node = g.Node(nidx)
+				node.Properties["name"] = "Leaf"
+				node.Properties["leaf"] = true
+				return g
+			},
+			nil,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
