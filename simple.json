@@ -1,21 +1,36 @@
 {
     "@rule": "House",
-    "interior": {"@rule": "Frame", "content": "MainCorridor"},
+    "interior": {"@rule": "Frame", "content": "Interior"},
     "exterior": {"@rule": "NOP"},
     "rect": "[0,0,80,40]",
 
+    "Interior": ["MainCorridor", "Asymmetric"],
+
     "MainCorridor": {
         "@rule": "Corridor",
-        "left": ["NRooms", "NRooms", "NRooms", "NRooms"],
+        "left": ["TwoRooms", "NRooms", "ThreeRooms", "Room"],
         "right": ["NRooms", "SideCorridor"],
         "corridor": "NOP"
     },
     "SideCorridor": {
         "@rule": "Corridor",
-        "left": ["NRooms", "NRooms"],
-        "right": ["NRooms", "NRooms"],
+        "left": ["TwoRooms", "Room"],
+        "right": ["TwoRooms", "Room"],
         "corridor": "NOP"
     },
+
+    "Asymmetric": {
+        "@rule": "RoomLine",
+        "rooms": ["Front", "Back"]
+    },
+    "Front": {
+        "@rule": "Corridor",
+        "left": ["NRooms", "NRooms"],
+        "right": ["NOP"],
+        "corridor": ["NOP"]
+    },
+    "Back": "SideCorridor",
+
     "NRooms": ["ThreeRooms", "TwoRooms", "Room"],
     "TwoRooms": {
         "@rule": "RoomLine",
@@ -25,6 +40,7 @@
         "@rule": "RoomLine",
         "rooms": ["Room", "Room", "Room"]
     },
+    
     "Room": {
         "@rule": "Room"
     },
