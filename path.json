@@ -1,0 +1,13 @@
+{
+    "@rule": "Path",
+    "steps": ["NOP", "NOP", "NOP", "Room", "Room"],
+    
+    "Room": {
+        "@rule": "In",
+        "name": "Room"
+    },
+    "NOP": {
+        "@rule": "In",
+        "name": "NOP"
+    }
+}

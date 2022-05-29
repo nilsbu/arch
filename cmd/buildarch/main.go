@@ -35,12 +35,17 @@ func buildArchitecture() error {
 	resolver := &merge.Resolver{
 		Name: "@rule",
 		Keys: map[string]rule.Rule{
+			// architecture
 			"House":    rule.House{},
 			"Corridor": rule.Corridor{},
 			"RoomLine": rule.RoomLine{},
 			"Frame":    rule.Frame{},
 			"Room":     rule.Room{},
 			"NOP":      rule.NOP{},
+
+			// paths
+			"Path": rule.Path{},
+			"In":   rule.In{},
 		},
 	}
 
