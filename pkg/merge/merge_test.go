@@ -93,54 +93,42 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			"no @",
-			[]string{`{"Root":{}}`},
+			[]string{`{"@":""}`},
 			allOk, resolver,
 			func() *graph.Graph { return nil },
 			merge.ErrInvalidBlueprint,
 		},
 		{
 			"too many @",
-			[]string{`{"Root":{"@":["R","B"]}}`},
+			[]string{`{"@":["R","B"]}`},
+			allOk, resolver,
+			func() *graph.Graph { return nil },
+			merge.ErrInvalidBlueprint,
+		},
+		{
+			"@ is block",
+			[]string{`{"@":{"@":"R"}}`},
 			allOk, resolver,
 			func() *graph.Graph { return nil },
 			merge.ErrInvalidBlueprint,
 		},
 		{
 			"@ has unknown name",
-			[]string{`{"Root":{"@":"Whoami"}}`},
+			[]string{`{"@":"Whoami"}`},
 			allOk, resolver,
 			func() *graph.Graph { return nil },
 			merge.ErrInvalidBlueprint,
 		},
 		{
 			"@ has unknown name in some depth",
-			[]string{`{"Root":"Next","Next":{"@":"1","a":{"@":"Whoami"}}}`},
-			allOk, resolver,
-			func() *graph.Graph { return nil },
-			merge.ErrInvalidBlueprint,
-		},
-		{
-			"@ has unknown name in some depth, no. 2",
-			[]string{`{"Root":"Next","Next":{"@":"1","a":"Huh"},"Huh":{"@":"Whoami"}}`},
+			[]string{`{"@":"1","a":"V","V":{"@":"1","a":{"@":"Whoami"}}}`},
 			allOk, resolver,
 			func() *graph.Graph { return nil },
 			merge.ErrInvalidBlueprint,
 		},
 		{
 			"only a single rule",
-			[]string{`{"Root":{"@":"R"}}`},
-			allOk, resolver,
-			func() *graph.Graph {
-				g := graph.New(nil)
-				node := g.Node(graph.NodeIndex{})
-				node.Properties["name"] = "R"
-				return g
-			},
-			nil,
-		},
-		{
-			"root references other property",
-			[]string{`{"Root":"X","X":{"@":"R"}}`},
+			[]string{`{"@":"R"}`},
 			allOk, resolver,
 			func() *graph.Graph {
 				g := graph.New(nil)
@@ -152,7 +140,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			"root has child",
-			[]string{`{"Root":{"@":"1","a":{"@":"R"}}}`},
+			[]string{`{"@":"1","a":{"@":"R"}}`},
 			allOk, resolver,
 			func() *graph.Graph {
 				g := graph.New(nil)
@@ -167,14 +155,14 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			"property 'a' required but not defined",
-			[]string{`{"Root":{"@":"1"}}`},
+			[]string{`{"@":"1"}`},
 			allOk, resolver,
 			func() *graph.Graph { return nil },
 			merge.ErrInvalidBlueprint,
 		},
 		{
 			"reject R in child",
-			[]string{`{"Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":{"@":"P"}}]}`},
+			[]string{`{"@":"1","a":"Root","Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":{"@":"P"}}]}`},
 			checker(func(graphs []*graph.Graph) (bool, error) {
 				for _, g := range graphs {
 					for _, nidx := range getNodes(g) {
@@ -192,6 +180,9 @@ func TestBuild(t *testing.T) {
 				node.Properties["name"] = "1"
 				nidx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nidx)
+				node.Properties["name"] = "1"
+				nidx, _ = g.Add(nidx)
+				node = g.Node(nidx)
 				node.Properties["name"] = "P"
 				return g
 			},
@@ -200,10 +191,10 @@ func TestBuild(t *testing.T) {
 		{
 			"check with centipede",
 			[]string{
-				`{"Root":[
+				`{"@":"1","a":"Root","Root":[
 					{"@":"1","a":[{"@":"R"},{"@":"R"},{"@":"R"}]},
 					{"@":"1","a":{"@":"P"}}]}`,
-				`{"Root":[
+				`{"@":"1","a":"Root","Root":[
 						{"@":"1","a":{"@":"P"}}]}`,
 			},
 			&csp.Centipede{},
@@ -214,6 +205,9 @@ func TestBuild(t *testing.T) {
 				node.Properties["name"] = "1"
 				nidx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nidx)
+				node.Properties["name"] = "1"
+				nidx, _ = g.Add(nidx)
+				node = g.Node(nidx)
 				node.Properties["name"] = "P"
 				return g
 			},
@@ -222,8 +216,8 @@ func TestBuild(t *testing.T) {
 		{
 			"error in matching",
 			[]string{
-				`{"Root":[{"@":"1","a":{"@":"P"}}]}`,
-				`{"Root":[{"@":"1","a":{"@":"P"}}]}`,
+				`{"@":"1","a":"Root","Root":[{"@":"1","a":{"@":"P"}}]}`,
+				`{"@":"1","a":"Root","Root":[{"@":"1","a":{"@":"P"}}]}`,
 			},
 			checker(func(graphs []*graph.Graph) (bool, error) {
 				return false, merge.ErrInvalidBlueprint // TODO this is not the correct error
@@ -235,7 +229,7 @@ func TestBuild(t *testing.T) {
 		{
 			"different types of children",
 			[]string{
-				`{"Root":[
+				`{"@":"1","a":"Root","Root":[
 					{"@":"1","a":[{"@":"R"},{"@":"P"}]}]}`,
 			},
 			&csp.Centipede{},
@@ -244,9 +238,12 @@ func TestBuild(t *testing.T) {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
 				node.Properties["name"] = "1"
-				n0, _ := g.Add(graph.NodeIndex{})
+				nx, _ := g.Add(graph.NodeIndex{})
+				node = g.Node(nx)
+				node.Properties["name"] = "1"
+				n0, _ := g.Add(nx)
 				g.Node(n0).Properties["name"] = "R"
-				n1, _ := g.Add(graph.NodeIndex{})
+				n1, _ := g.Add(nx)
 				g.Node(n1).Properties["name"] = "P"
 				return g
 			},
@@ -254,7 +251,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			"set properties for self and child",
-			[]string{`{"Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":"Param","Param":{"@":"P"}}]}`},
+			[]string{`{"@":"1","a":"Root","Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":"Param","Param":{"@":"P"}}]}`},
 			allOk,
 			with(resolver, map[string]rule.Rule{
 				"1": &tr.RuleMock{
@@ -265,12 +262,11 @@ func TestBuild(t *testing.T) {
 						if bp == nil {
 							return errors.New("bp not there")
 						}
-
 						node := g.Node(nidx)
-						node.Properties["set"] = "meeee"
+						node.Properties["set"] = "self"
 						if as, ok := children["a"]; ok {
 							child := g.Node(as[0])
-							child.Properties["asdf"] = "qwerty"
+							child.Properties["asdf"] = "child"
 						}
 						return nil
 					},
@@ -280,18 +276,23 @@ func TestBuild(t *testing.T) {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
 				node.Properties["name"] = "1"
-				node.Properties["set"] = "meeee"
+				node.Properties["set"] = "self"
 				nidx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nidx)
+				node.Properties["name"] = "1"
+				node.Properties["set"] = "self"
+				node.Properties["asdf"] = "child"
+				nidx, _ = g.Add(nidx)
+				node = g.Node(nidx)
 				node.Properties["name"] = "R"
-				node.Properties["asdf"] = "qwerty"
+				node.Properties["asdf"] = "child"
 				return g
 			},
 			nil,
 		},
 		{
 			"unrecoverable error in PrepareGraph() causes failure",
-			[]string{`{"Root":{"@":"1","a":{"@":"R"}}}`},
+			[]string{`{"@":"1","a":"Root","Root":{"@":"1","a":{"@":"R"}}}`},
 			allOk,
 			with(resolver, map[string]rule.Rule{
 				"1": &tr.RuleMock{
@@ -311,7 +312,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			"recoverable error in PrepareGraph() causes rejection of first option",
-			[]string{`{"Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":{"@":"P"}}]}`},
+			[]string{`{"@":"1","a":"Root","Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":{"@":"P"}}]}`},
 			allOk,
 			with(resolver, map[string]rule.Rule{
 				"1": &tr.RuleMock{
@@ -340,6 +341,9 @@ func TestBuild(t *testing.T) {
 				node.Properties["name"] = "1"
 				nidx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nidx)
+				node.Properties["name"] = "1"
+				nidx, _ = g.Add(nidx)
+				node = g.Node(nidx)
 				node.Properties["name"] = "P"
 				return g
 			},
@@ -347,7 +351,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			"reject all options",
-			[]string{`{"Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":{"@":"P"}}]}`},
+			[]string{`{"@":"1","a":"Root","Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":{"@":"P"}}]}`},
 			allOk,
 			with(resolver, map[string]rule.Rule{
 				"1": &tr.RuleMock{
@@ -369,7 +373,7 @@ func TestBuild(t *testing.T) {
 		{
 			// this test was introduced because of a bug where PrepareGraph wasn't called on leafs
 			"element that always fails",
-			[]string{`{"Root":{"@":"1","a":{"@":"X"}}}`},
+			[]string{`{"@":"1","a":"Root","Root":{"@":"1","a":{"@":"X"}}}`},
 			allOk,
 			with(resolver, map[string]rule.Rule{
 				"X": &tr.RuleMock{
@@ -390,7 +394,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			"set property on leaf",
-			[]string{`{"Root":{"@":"1","a":"X"},"X":{"@":"Leaf"}}`},
+			[]string{`{"@":"1","a":"Root","Root":{"@":"1","a":"X"},"X":{"@":"Leaf"}}`},
 			allOk,
 			resolver,
 			func() *graph.Graph {
@@ -398,6 +402,32 @@ func TestBuild(t *testing.T) {
 				node := g.Node(graph.NodeIndex{})
 				node.Properties["name"] = "1"
 				nidx, _ := g.Add(graph.NodeIndex{})
+				node = g.Node(nidx)
+				node.Properties["name"] = "1"
+				nidx, _ = g.Add(nidx)
+				node = g.Node(nidx)
+				node.Properties["name"] = "Leaf"
+				node.Properties["leaf"] = true
+				return g
+			},
+			nil,
+		},
+		{
+			"block in block",
+			[]string{`{"@":"1","a":"Root","Root":{"@":"1","a":{"@":"1","a":"X"}},"X":{"@":"Leaf"}}`},
+			allOk,
+			resolver,
+			func() *graph.Graph {
+				g := graph.New(nil)
+				node := g.Node(graph.NodeIndex{})
+				node.Properties["name"] = "1"
+				nidx, _ := g.Add(graph.NodeIndex{})
+				node = g.Node(nidx)
+				node.Properties["name"] = "1"
+				nidx, _ = g.Add(nidx)
+				node = g.Node(nidx)
+				node.Properties["name"] = "1"
+				nidx, _ = g.Add(nidx)
 				node = g.Node(nidx)
 				node.Properties["name"] = "Leaf"
 				node.Properties["leaf"] = true

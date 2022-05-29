@@ -1,10 +1,9 @@
 {
-    "Root": {
-        "@rule": "House",
-        "interior": {"@rule": "Frame", "content": "MainCorridor"},
-        "exterior": {"@rule": "NOP"},
-        "rect": "[0,0,80,40]"
-    },
+    "@rule": "House",
+    "interior": {"@rule": "Frame", "content": "MainCorridor"},
+    "exterior": {"@rule": "NOP"},
+    "rect": "[0,0,80,40]",
+
     "MainCorridor": {
         "@rule": "Corridor",
         "left": ["NRooms", "NRooms", "NRooms", "NRooms"],

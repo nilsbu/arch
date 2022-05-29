@@ -6,136 +6,136 @@ import (
 	"github.com/nilsbu/arch/pkg/blueprint"
 )
 
-type choices struct {
-	options   []group
-	values    []string
+// TODO document all of this
+type block struct {
+	params    []group
 	blueprint *blueprint.Blueprint
 }
 
-type group []*choices
-
-func calcChoices(bp *blueprint.Blueprint, property string, resolver *Resolver) (*choices, error) {
-	result := &choices{
-		values:    bp.Values(property),
-		blueprint: bp,
-	}
-
-	if len(result.values) == 0 {
-		return nil, fmt.Errorf("%w: poperty '%v' has no values", ErrInvalidBlueprint, property)
-	}
-
-	result.options = make([]group, len(result.values))
-	for i, option := range result.values {
-		switch option[0] {
-		case '*':
-			if grp, err := getGroup(bp.Child(option), resolver); err != nil {
-				return nil, err
-			} else {
-				result.options[i] = grp
-			}
-		default:
-			if choice, err := calcChoices(bp, option, resolver); err != nil {
-				return nil, err
-			} else {
-				result.options[i] = group{choice}
-			}
+func (b *block) n() int {
+	value := 1
+	for _, param := range b.params {
+		for _, iob := range param {
+			value *= iob.n()
 		}
 	}
-	return result, nil
+	return value
 }
 
-func getGroup(bp *blueprint.Blueprint, resolver *Resolver) (group, error) {
+type bpNode struct {
+	children [][]*bpNode
+	bp       *blueprint.Blueprint
+}
+
+func (b *block) get(i int) *bpNode {
+	res := &bpNode{
+		bp: b.blueprint,
+	}
+	res.children = make([][]*bpNode, len(b.params))
+	for k, param := range b.params {
+		pnodes := make([]*bpNode, len(param))
+		for l, iob := range param {
+			x := iob.n()
+			j := i % x
+			i /= x
+			pnodes[l] = iob.get(j)
+		}
+		res.children[k] = pnodes
+	}
+	return res
+}
+
+type group []*groupOrBlock
+
+func (g group) n() int {
+	value := 0
+	for _, iob := range g {
+		value += iob.n()
+	}
+	return value
+}
+func (g group) get(i int) (bpn *bpNode) {
+	for _, iob := range g {
+		x := iob.n()
+		if i < x {
+			bpn = iob.get(i)
+			break
+		} else {
+			i -= x
+		}
+	}
+	// Slightly awkward construction due to my obsession with 100% coverage. There's no realistic way to produce an
+	// error here, so I chose to break earlier and thus force to call the following line.
+	return
+}
+
+type groupOrBlock struct {
+	group group
+	block *block
+}
+
+func (gob groupOrBlock) n() int {
+	if gob.group != nil {
+		return gob.group.n()
+	} else {
+		return gob.block.n()
+	}
+}
+
+func (gob groupOrBlock) get(i int) *bpNode {
+	if gob.group != nil {
+		return gob.group.get(i)
+	} else {
+		return gob.block.get(i)
+	}
+}
+
+func calcBlock(bp *blueprint.Blueprint, resolver *Resolver) (*block, error) {
 	if name := bp.Values(resolver.Name); len(name) != 1 {
 		return nil, fmt.Errorf("%w: ", ErrInvalidBlueprint)
 	} else {
-		grp := []*choices{{
+		blck := &block{
 			blueprint: bp,
-		}}
+		}
+
 		rule := resolver.Keys[name[0]]
 		if rule == nil {
 			return nil, fmt.Errorf("%w: key '%v' is not defined", ErrInvalidBlueprint, name[0])
 		}
 		for _, param := range rule.ChildParams() {
-			if choice, err := calcConjunction(bp, param, resolver); err != nil {
+			if grp, err := calcGroup(bp, param, resolver); err != nil {
 				return nil, err
 			} else {
-				grp = append(grp, choice)
+				blck.params = append(blck.params, grp)
 			}
 		}
-		return grp, nil
+		return blck, nil
 	}
 }
 
-func calcConjunction(bp *blueprint.Blueprint, property string, resolver *Resolver) (*choices, error) {
-	result := &choices{
-		blueprint: bp,
-	}
-
+func calcGroup(bp *blueprint.Blueprint, property string, resolver *Resolver) (group, error) {
 	values := bp.Values(property)
 	if len(values) == 0 {
 		return nil, fmt.Errorf("%w: poperty '%v' has no values", ErrInvalidBlueprint, property)
 	}
 
-	grp := make([]*choices, len(values))
-	for i, option := range values {
-		switch option[0] {
-		case '*':
-			if grp2, err := getGroup(bp.Child(option), resolver); err != nil {
-				return nil, err
-			} else {
-				grp[i] = grp2[0]
-			}
-		default:
-			if choice, err := calcChoices(bp, option, resolver); err != nil {
-				return nil, err
-			} else {
-				grp[i] = choice
-			}
+	group := make(group, len(values))
+	for i, opt := range values {
+		var err error
+		if group[i], err = calcGroupOrBlock(bp, opt, resolver); err != nil {
+			return nil, err
 		}
 	}
-
-	result.options = []group{grp}
-	return result, nil
+	return group, nil
 }
 
-func (c *choices) n() int {
-	if len(c.options) == 0 {
-		return 1
-	} else {
-		n := 0
-		for _, opt := range c.options {
-			p := 1
-			for _, s2 := range opt {
-				p *= s2.n()
-			}
-			n += p
-		}
-		return n
+func calcGroupOrBlock(bp *blueprint.Blueprint, property string, resolver *Resolver) (*groupOrBlock, error) {
+	switch property[0] {
+	case '*':
+		blck, err := calcBlock(bp.Child(property), resolver)
+		return &groupOrBlock{block: blck}, err
+	default:
+		choice, err := calcGroup(bp, property, resolver)
+		return &groupOrBlock{group: choice}, err
 	}
-}
-
-type bpNode struct {
-	children []*bpNode
-	bp       *blueprint.Blueprint
-}
-
-func (c *choices) get(i int) *bpNode {
-	for _, opt := range c.options {
-		p := 1
-		for _, s2 := range opt {
-			p *= s2.n()
-		}
-		if i < p {
-			bps := &bpNode{}
-			for _, s2 := range opt {
-				j := i % s2.n()
-				i /= s2.n()
-				bps.children = append(bps.children, s2.get(j))
-			}
-			return bps
-		} else {
-			i -= p
-		}
-	}
-	return &bpNode{bp: c.blueprint}
 }
