@@ -63,7 +63,7 @@ func (c *Centipede) initVars() {
 		name := centipede.VariableName(fmt.Sprint(i))
 		domain := centipede.Domain[int]{}
 		for j, nidx0 := range c.nodes[0] {
-			if couldBe(c.graphs[1].Node(nidx1).Properties, c.graphs[0].Node(nidx0).Properties) {
+			if couldBe(c.graphs[0].Node(nidx0).Properties, c.graphs[1].Node(nidx1).Properties) {
 				domain = append(domain, j)
 			}
 		}
@@ -117,10 +117,10 @@ func (c *Centipede) setAdjacencyConstraints() {
 
 func couldBe(a, b graph.Properties) bool {
 	// TODO find a better place for this
-	if aname, ok := a["name"]; !ok {
+	if bname, ok := b["name"]; !ok {
 		return true
-	} else if bname, ok := b["name"]; !ok {
-		return true
+	} else if aname, ok := a["name"]; !ok {
+		return false
 	} else {
 		return aname == bname
 	}

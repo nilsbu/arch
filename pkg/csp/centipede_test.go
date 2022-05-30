@@ -85,7 +85,7 @@ func TestCentipedeMatch(t *testing.T) {
 			false, nil,
 		},
 		{
-			"matching works when first is nameless",
+			"matching doesn't work when first is nameless",
 			[]func() *graph.Graph{
 				func() *graph.Graph {
 					g := graph.New(nil)
@@ -97,7 +97,7 @@ func TestCentipedeMatch(t *testing.T) {
 					return g
 				},
 			},
-			true, nil,
+			false, nil,
 		},
 		{
 			"matching works when second is nameless",
@@ -109,6 +109,22 @@ func TestCentipedeMatch(t *testing.T) {
 				},
 				func() *graph.Graph {
 					g := graph.New(nil)
+					return g
+				},
+			},
+			true, nil,
+		},
+		{
+			"matching names",
+			[]func() *graph.Graph{
+				func() *graph.Graph {
+					g := graph.New(nil)
+					g.Node(graph.NodeIndex{}).Properties["name"] = "a"
+					return g
+				},
+				func() *graph.Graph {
+					g := graph.New(nil)
+					g.Node(graph.NodeIndex{}).Properties["name"] = "a"
 					return g
 				},
 			},
