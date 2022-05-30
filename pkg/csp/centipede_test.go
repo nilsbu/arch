@@ -36,39 +36,19 @@ func TestCentipedeMatch(t *testing.T) {
 			true, nil, nil,
 		},
 		{
-			"both root only",
-			[]func() *graph.Graph{
-				func() *graph.Graph { return graph.New(nil) },
-				func() *graph.Graph { return graph.New(nil) },
-			},
-			true, []graph.NodeIndex{{1, 0}}, nil,
-		},
-		{
-			"non-leafable graph",
-			[]func() *graph.Graph{
-				func() *graph.Graph {
-					g := graph.New(nil)
-					n10, _ := g.Add(graph.NodeIndex{})
-					n11, _ := g.Add(graph.NodeIndex{})
-					g.Link(n10, n11)
-					g.Add(n10)
-					return g
-				},
-				func() *graph.Graph { return graph.New(nil) },
-			},
-			false, nil, graph.ErrNotLeafable,
-		},
-		{
-			"one has a child",
+			"when parent or child match, parent is chosen",
 			[]func() *graph.Graph{
 				func() *graph.Graph {
 					g := graph.New(nil)
 					g.Add(graph.NodeIndex{})
 					return g
 				},
-				func() *graph.Graph { return graph.New(nil) },
+				func() *graph.Graph {
+					leaves, _ := graph.New(nil).Leaves()
+					return leaves
+				},
 			},
-			true, []graph.NodeIndex{{1, 0}}, nil,
+			true, []graph.NodeIndex{{0, 0}}, nil,
 		},
 		{
 			"incompatible names",
@@ -81,6 +61,7 @@ func TestCentipedeMatch(t *testing.T) {
 				func() *graph.Graph {
 					g := graph.New(nil)
 					g.Node(graph.NodeIndex{}).Properties["name"] = "b"
+					g, _ = g.Leaves()
 					return g
 				},
 			},
@@ -96,6 +77,7 @@ func TestCentipedeMatch(t *testing.T) {
 				func() *graph.Graph {
 					g := graph.New(nil)
 					g.Node(graph.NodeIndex{}).Properties["name"] = "b"
+					g, _ = g.Leaves()
 					return g
 				},
 			},
@@ -111,10 +93,11 @@ func TestCentipedeMatch(t *testing.T) {
 				},
 				func() *graph.Graph {
 					g := graph.New(nil)
+					g, _ = g.Leaves()
 					return g
 				},
 			},
-			true, []graph.NodeIndex{{1, 0}}, nil,
+			true, []graph.NodeIndex{{0, 0}}, nil,
 		},
 		{
 			"matching names",
@@ -127,10 +110,11 @@ func TestCentipedeMatch(t *testing.T) {
 				func() *graph.Graph {
 					g := graph.New(nil)
 					g.Node(graph.NodeIndex{}).Properties["name"] = "a"
+					g, _ = g.Leaves()
 					return g
 				},
 			},
-			true, []graph.NodeIndex{{1, 0}}, nil,
+			true, []graph.NodeIndex{{0, 0}}, nil,
 		},
 		{
 			"name in names",
@@ -144,10 +128,11 @@ func TestCentipedeMatch(t *testing.T) {
 				func() *graph.Graph {
 					g := graph.New(nil)
 					g.Node(graph.NodeIndex{}).Properties["name"] = "a"
+					g, _ = g.Leaves()
 					return g
 				},
 			},
-			true, []graph.NodeIndex{{1, 0}}, nil,
+			true, []graph.NodeIndex{{0, 0}}, nil,
 		},
 		{
 			"names don't match",
@@ -161,6 +146,7 @@ func TestCentipedeMatch(t *testing.T) {
 				func() *graph.Graph {
 					g := graph.New(nil)
 					g.Node(graph.NodeIndex{}).Properties["name"] = "a"
+					g, _ = g.Leaves()
 					return g
 				},
 			},
@@ -171,17 +157,40 @@ func TestCentipedeMatch(t *testing.T) {
 			[]func() *graph.Graph{
 				func() *graph.Graph {
 					g := graph.New(nil)
-					g.Add(graph.NodeIndex{})
-					g.Add(graph.NodeIndex{})
+					nidx, _ := g.Add(graph.NodeIndex{})
+					g.Node(nidx).Properties["name"] = "a"
+					nidx, _ = g.Add(graph.NodeIndex{})
+					g.Node(nidx).Properties["name"] = "a"
+					return g
+				},
+				func() *graph.Graph {
+					g := graph.New(nil)
+					nidx, _ := g.Add(graph.NodeIndex{})
+					g.Node(nidx).Properties["name"] = "a"
+					return g
+				},
+			},
+			true, []graph.NodeIndex{{1, 0}}, nil,
+		},
+		{
+			"values are unique",
+			[]func() *graph.Graph{
+				func() *graph.Graph {
+					g := graph.New(nil)
+					nidx, _ := g.Add(graph.NodeIndex{})
+					g.Node(nidx).Properties["name"] = "a"
+					nidx, _ = g.Add(graph.NodeIndex{})
+					g.Node(nidx).Properties["name"] = "a"
 					return g
 				},
 				func() *graph.Graph {
 					g := graph.New(nil)
 					g.Add(graph.NodeIndex{})
+					g.Add(graph.NodeIndex{})
 					return g
 				},
 			},
-			true, []graph.NodeIndex{{1, 0}}, nil,
+			true, []graph.NodeIndex{{1, 0}, {1, 1}}, nil,
 		},
 		{
 			"can't match because adjacency is invalid",
@@ -243,6 +252,33 @@ func TestCentipedeMatch(t *testing.T) {
 			},
 			true, []graph.NodeIndex{{1, 1}, {1, 2}, {1, 0}}, nil,
 		},
+		{
+			"never match both parent and child",
+			[]func() *graph.Graph{
+				func() *graph.Graph {
+					g := graph.New(nil)
+					n10, _ := g.Add(graph.NodeIndex{})
+					g.Node(n10).Properties["name"] = "a"
+					n20, _ := g.Add(n10)
+					g.Node(n20).Properties["name"] = "c"
+					n11, _ := g.Add(graph.NodeIndex{})
+					g.Node(n11).Properties["name"] = "b"
+					g.Link(n10, n11)
+					return g
+				},
+				func() *graph.Graph {
+					g := graph.New(nil)
+					n10, _ := g.Add(graph.NodeIndex{})
+					n11, _ := g.Add(graph.NodeIndex{})
+					n12, _ := g.Add(graph.NodeIndex{})
+					g.Node(n10).Properties["name"] = "b"
+					g.Node(n11).Properties["name"] = "c"
+					g.Node(n12).Properties["name"] = "a"
+					return g
+				},
+			},
+			false, nil, nil,
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			graphs := make([]*graph.Graph, len(c.graphs))
@@ -276,7 +312,10 @@ func TestResetNodes(t *testing.T) {
 	g1.Add(graph.NodeIndex{})
 	g1.Add(graph.NodeIndex{})
 
+	g2 := graph.New(nil)
+	g2.Add(graph.NodeIndex{})
+
 	c.Match([]*graph.Graph{graph.New(nil), g1})
-	c.Match([]*graph.Graph{graph.New(nil), graph.New(nil)})
+	c.Match([]*graph.Graph{graph.New(nil), g2})
 	// nothing to check, if it doesn't crash, reset worked
 }
