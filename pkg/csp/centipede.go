@@ -17,15 +17,15 @@ type Centipede struct {
 	constraints centipede.Constraints[int]
 }
 
-func (c *Centipede) Match(graphs []*graph.Graph) (ok bool, err error) {
+func (c *Centipede) Match(graphs []*graph.Graph) (ok bool, matches []graph.NodeIndex, err error) {
 	if len(graphs) < 2 {
-		return true, nil
+		return true, nil, nil
 	}
 
 	defer c.cleanup()
 
 	if err := c.setup(graphs); err != nil {
-		return false, fmt.Errorf("cannot setup centipede matching: %w", err)
+		return false, nil, fmt.Errorf("cannot setup centipede matching: %w", err)
 	}
 
 	c.initVars()
@@ -34,6 +34,7 @@ func (c *Centipede) Match(graphs []*graph.Graph) (ok bool, err error) {
 
 	solver := centipede.NewBackTrackingCSPSolver(c.vars, c.constraints)
 	ok, err = solver.Solve(context.TODO())
+	matches = c.getMatches()
 
 	return
 }
@@ -113,6 +114,14 @@ func (c *Centipede) setAdjacencyConstraints() {
 			}
 		}
 	}
+}
+
+func (c *Centipede) getMatches() []graph.NodeIndex {
+	matches := make([]graph.NodeIndex, len(c.vars))
+	for i, v := range c.vars {
+		matches[i] = c.nodes[0][v.Value]
+	}
+	return matches
 }
 
 func couldBe(a, b graph.Properties) bool {

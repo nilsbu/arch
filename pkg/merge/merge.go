@@ -46,7 +46,8 @@ func Build(bps []*blueprint.Blueprint, check Check, resolver *Resolver, shuffle 
 			continue
 		}
 
-		if ok, err := check.Match(gs); err != nil {
+		// TODO use matches (and decide what to do when none are given)
+		if ok, _, err := check.Match(gs); err != nil {
 			return nil, err
 		} else if ok {
 			return gs[0], nil
