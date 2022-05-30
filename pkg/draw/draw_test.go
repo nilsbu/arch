@@ -109,6 +109,35 @@ func TestDraw(t *testing.T) {
 			},
 			nil,
 		},
+		{
+			"two interior rooms disabled",
+			func() *graph.Graph {
+				g := graph.New(nil)
+				node := (*area.AreaNode)(g.Node(graph.NodeIndex{}))
+				node.SetRect(area.Rectangle{X0: 0, Y0: 0, X1: 5, Y1: 3})
+				n1, _ := g.Add(graph.NodeIndex{})
+				node = (*area.AreaNode)(g.Node(n1))
+				node.SetRect(area.Rectangle{X0: 0, Y0: 0, X1: 3, Y1: 3})
+				node.Properties["render"] = false
+				n2, _ := g.Add(graph.NodeIndex{})
+				node = (*area.AreaNode)(g.Node(n2))
+				node.SetRect(area.Rectangle{X0: 3, Y0: 0, X1: 5, Y1: 3})
+				node.Properties["render"] = false
+				e1, _ := g.Link(n1, n2)
+				edge := (*area.DoorEdge)(g.Edge(e1))
+				edge.SetPos(area.Point{X: 3, Y: 1})
+				edge.Properties["render"] = false
+
+				return g
+			},
+			[][]world.Tile{
+				{w, w, w, w, w, w},
+				{w, f, f, f, f, w},
+				{w, f, f, f, f, w},
+				{w, w, w, w, w, w},
+			},
+			nil,
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			if data, err := draw.Draw(c.graph()); err != nil && c.err == nil {
