@@ -2,6 +2,7 @@ package graph_test
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -302,6 +303,32 @@ func TestGraph(t *testing.T) {
 				2: {{{3, 0}}, {{3, 1}}},
 			},
 		},
+		{
+			"link in other instance",
+			func() *graph.Graph {
+				g := graph.New(nil)
+				n0, _ := g.Add(graph.NodeIndex{})
+				n1, _ := g.Add(graph.NodeIndex{})
+				g = graph.New(g)
+				_, err := g.Link(n0, n1)
+				fmt.Println(err)
+				return g
+			},
+			map[graph.NodeIndex]*graph.Node{
+				{0, 0}: {Properties: graph.Properties{}, Parent: graph.NoParent},
+				{1, 0}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
+				{1, 1}: {Properties: graph.Properties{}, Parent: graph.NodeIndex{0, 0}, Edges: []graph.EdgeIndex{0}},
+			},
+			map[graph.NodeIndex][]graph.NodeIndex{
+				{0, 0}: {{1, 0}, {1, 1}},
+			},
+			map[graph.EdgeIndex]*graph.Edge{
+				0: {Properties: graph.Properties{}},
+			},
+			map[graph.EdgeIndex][2][]graph.NodeIndex{
+				0: {{{1, 0}}, {{1, 1}}},
+			},
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			g := c.setup()
@@ -389,6 +416,7 @@ func TestAddWithoutParent(t *testing.T) {
 }
 
 func TestLinkeNodesTwice(t *testing.T) {
+	// TODO this should be legal
 	g := graph.New(nil)
 	n0, _ := g.Add(graph.NodeIndex{})
 	n1, _ := g.Add(graph.NodeIndex{})
@@ -424,31 +452,6 @@ func TestLinkWithOwnParent(t *testing.T) {
 	g := graph.New(nil)
 	n0, _ := g.Add(graph.NodeIndex{})
 	if _, err := g.Link(graph.NodeIndex{}, n0); err == nil {
-		t.Error("expected error but none ocurred")
-	} else if !errors.Is(err, graph.ErrIllegalAction) {
-		t.Error("link error must be an 'ErrIllegalAction'")
-	}
-}
-
-func TestLinkAfterInheritance(t *testing.T) {
-	g := graph.New(nil)
-	n0, _ := g.Add(graph.NodeIndex{})
-	n1, _ := g.Add(graph.NodeIndex{})
-	g = graph.New(g)
-
-	if _, err := g.Link(n0, n1); err == nil {
-		t.Error("expected error but none ocurred")
-	} else if !errors.Is(err, graph.ErrIllegalAction) {
-		t.Error("link error must be an 'ErrIllegalAction'")
-	}
-}
-
-func TestOneLinkedNodeBeforeInheritance(t *testing.T) {
-	g := graph.New(nil)
-	n0, _ := g.Add(graph.NodeIndex{})
-	g = graph.New(g)
-	n1, _ := g.Add(graph.NodeIndex{})
-	if _, err := g.Link(n0, n1); err == nil {
 		t.Error("expected error but none ocurred")
 	} else if !errors.Is(err, graph.ErrIllegalAction) {
 		t.Error("link error must be an 'ErrIllegalAction'")

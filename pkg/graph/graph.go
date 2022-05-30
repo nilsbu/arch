@@ -190,7 +190,7 @@ func (g *Graph) InheritEdge(parent, nidx NodeIndex, edges []EdgeIndex) error {
 // Link creates an edge between two nodes.
 // They must have the same parent and not be linked, already.
 func (g *Graph) Link(a, b NodeIndex) (EdgeIndex, error) {
-	if nodeA, nodeB := g.nodeSameInstance(a), g.nodeSameInstance(b); nodeA == nil || nodeB == nil {
+	if nodeA, nodeB := g.Node(a), g.Node(b); nodeA == nil || nodeB == nil {
 		return -1, fmt.Errorf("%w: nodes must be created in the same graph as the edge", ErrIllegalAction)
 	} else if nodeA.Parent != nodeB.Parent {
 		return -1, fmt.Errorf("%w: nodes must have the same parent", ErrIllegalAction)
