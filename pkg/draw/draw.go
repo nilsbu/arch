@@ -27,6 +27,12 @@ func draw(g *graph.Graph, nidx graph.NodeIndex, tiles *world.Tiles) error {
 	rect := a.GetRect()
 	if rect.X1 == 0 || rect.Y1 == 0 {
 		return fmt.Errorf("%w: rect for %v not set", ErrInvalidGraph, nidx)
+	} else if object, ok := a.Properties["object"]; ok {
+		for y := rect.Y0; y <= rect.Y1; y++ {
+			for x := rect.X0; x <= rect.X1; x++ {
+				tiles.Set(x, y, world.Tile{Type: world.Occupied, Texture: object.(int)})
+			}
+		}
 	} else if render, ok := a.Properties["render"]; !ok || render.(bool) {
 		for x := rect.X0; x <= rect.X1; x++ {
 			tiles.Set(x, rect.Y0, world.Tile{Type: world.Wall})

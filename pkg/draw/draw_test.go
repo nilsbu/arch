@@ -14,6 +14,8 @@ func TestDraw(t *testing.T) {
 	f := world.Tile{Type: world.Free}
 	w := world.Tile{Type: world.Wall}
 	d := world.Tile{Type: world.Door}
+	o := world.Tile{Type: world.Occupied, Texture: 1}
+	p := world.Tile{Type: world.Occupied, Texture: 2}
 
 	for _, c := range []struct {
 		name  string
@@ -135,6 +137,28 @@ func TestDraw(t *testing.T) {
 				{w, f, f, f, f, w},
 				{w, f, f, f, f, w},
 				{w, w, w, w, w, w},
+			},
+			nil,
+		},
+		{
+			"only one room",
+			func() *graph.Graph {
+				g := graph.New(nil)
+				node := (*area.AreaNode)(g.Node(graph.NodeIndex{}))
+				node.SetRect(area.Rectangle{X0: 0, Y0: 0, X1: 3, Y1: 3})
+				left, _ := g.Add(graph.NodeIndex{})
+				(*area.AreaNode)(g.Node(left)).SetRect(area.Rectangle{X0: 1, Y0: 1, X1: 1, Y1: 2})
+				g.Node(left).Properties["object"] = 1
+				right, _ := g.Add(graph.NodeIndex{})
+				(*area.AreaNode)(g.Node(right)).SetRect(area.Rectangle{X0: 2, Y0: 1, X1: 2, Y1: 2})
+				g.Node(right).Properties["object"] = 2
+				return g
+			},
+			[][]world.Tile{
+				{w, w, w, w},
+				{w, o, p, w},
+				{w, o, p, w},
+				{w, w, w, w},
 			},
 			nil,
 		},
