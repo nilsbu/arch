@@ -14,7 +14,7 @@
     },
     "SideCorridor": {
         "@rule": "Corridor",
-        "left": ["TwoRooms", "Room"],
+        "left": ["TwoRooms", "Bedroom"],
         "right": ["TwoRooms", "Room"],
         "corridor": "NOP"
     },
@@ -41,10 +41,20 @@
         "rooms": ["Room", "Room", "Room"]
     },
     
+    "Bedroom": {
+        "@rule": "FurnishedRoom",
+        "furniture": {
+            "@rule": "Furniture",
+            "elements": "Bed",
+            "sizes": "[2,4]"
+        }
+    },
     "Room": {
         "@rule": "Room"
     },
     "NOP": {
         "@rule": "NOP"
-    }
+    },
+
+    "Bed": {"@rule": "Occupy", "texture": "1"}
 }

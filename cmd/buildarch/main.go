@@ -36,12 +36,15 @@ func buildArchitecture() error {
 		Name: "@rule",
 		Keys: map[string]rule.Rule{
 			// architecture
-			"House":    rule.House{},
-			"Corridor": rule.Corridor{},
-			"RoomLine": rule.RoomLine{},
-			"Frame":    rule.Frame{},
-			"Room":     rule.Room{},
-			"NOP":      rule.NOP{},
+			"House":         rule.House{},
+			"Corridor":      rule.Corridor{},
+			"RoomLine":      rule.RoomLine{},
+			"Frame":         rule.Frame{},
+			"Room":          rule.Room{},
+			"FurnishedRoom": rule.FurnishedRoom{},
+			"Furniture":     rule.Furniture{},
+			"NOP":           rule.NOP{},
+			"Occupy":        rule.Occupy{},
 
 			// paths
 			"Path": rule.Path{},

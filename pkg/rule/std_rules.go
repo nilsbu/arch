@@ -2,6 +2,8 @@ package rule
 
 import (
 	"encoding/json"
+	"fmt"
+	"strconv"
 
 	"github.com/nilsbu/arch/pkg/area"
 	"github.com/nilsbu/arch/pkg/blueprint"
@@ -147,7 +149,7 @@ func (r Frame) PrepareGraph(
 ) error {
 	cnidxs := children["content"]
 	if len(cnidxs) != 1 {
-		return ErrInvalidGraph
+		return ErrPreparation
 	}
 
 	if err := area.Split(g, nidx, cnidxs, []float64{}, RoomOrientation(g, nidx)); err != nil {
@@ -173,6 +175,68 @@ func (r Room) PrepareGraph(
 	return nil
 }
 
+type FurnishedRoom struct{}
+
+func (r FurnishedRoom) ChildParams() []string {
+	return []string{"furniture"}
+}
+
+func (r FurnishedRoom) PrepareGraph(
+	g *graph.Graph,
+	nidx graph.NodeIndex,
+	children map[string][]graph.NodeIndex,
+	bp *blueprint.Blueprint,
+) error {
+	SetWall(g, nidx, true)
+
+	if furniture, ok := children["furniture"]; ok {
+		interior := g.Node(furniture[0])
+		a := (*area.AreaNode)(g.Node(nidx))
+		rect := a.GetRect()
+		(*area.AreaNode)(interior).SetRect(
+			area.Rectangle{X0: rect.X0 + 1, Y0: rect.Y0 + 1, X1: rect.X1 - 1, Y1: rect.Y1 - 1})
+	}
+
+	return nil
+}
+
+type Furniture struct{}
+
+func (r Furniture) ChildParams() []string {
+	return []string{"elements"}
+}
+
+func (r Furniture) PrepareGraph(
+	g *graph.Graph,
+	nidx graph.NodeIndex,
+	children map[string][]graph.NodeIndex,
+	bp *blueprint.Blueprint,
+) error {
+	SetWall(g, nidx, false)
+
+	elements := children["elements"]
+	sizes := bp.Values("sizes")
+	if len(elements) != len(sizes) {
+		return fmt.Errorf("%w: have %v elements and %v sizes",
+			ErrPreparation, len(elements), len(sizes))
+	} else {
+		a := (*area.AreaNode)(g.Node(nidx))
+		rect := a.GetRect()
+		for i := range sizes {
+			size := []int{}
+			if err := json.Unmarshal([]byte(bp.Values("sizes")[i]), &size); err != nil {
+				return err
+			} else {
+				e := (*area.AreaNode)(g.Node(elements[i]))
+				// TODO allow for positions other then top-left
+				e.SetRect(area.Rectangle{
+					X0: rect.X0, Y0: rect.Y0, X1: rect.X0 + size[0] - 1, Y1: rect.Y0 + size[1] - 1})
+			}
+		}
+		return nil
+	}
+}
+
 type NOP struct{}
 
 func (r NOP) ChildParams() []string {
@@ -187,4 +251,28 @@ func (r NOP) PrepareGraph(
 ) error {
 	SetWall(g, nidx, false)
 	return nil
+}
+
+type Occupy struct{}
+
+func (r Occupy) ChildParams() []string {
+	return []string{}
+}
+
+func (r Occupy) PrepareGraph(
+	g *graph.Graph,
+	nidx graph.NodeIndex,
+	children map[string][]graph.NodeIndex,
+	bp *blueprint.Blueprint,
+) error {
+	SetWall(g, nidx, false)
+
+	if texture := bp.Values("texture"); len(texture) != 1 {
+		return ErrPreparation
+	} else if tex, err := strconv.Atoi(texture[0]); err != nil {
+		return err
+	} else {
+		g.Node(nidx).Properties["object"] = tex
+		return nil
+	}
 }
