@@ -1,8 +1,13 @@
 {
     "@rule": "Path",
-    "steps": ["Exterior", "Corridor", "Corridor", "Room", "Room"],
+    "steps": ["NOP", "NOP", "NOP", "Room", "Room"],
     
-    "Room": {"@rule": "In", "name": "Room"},
-    "Exterior": {"@rule": "In", "name": "exterior"},
-    "Corridor": {"@rule": "In", "name": "corridor"}
+    "Room": {
+        "@rule": "In",
+        "name": "Room"
+    },
+    "NOP": {
+        "@rule": "In",
+        "name": "NOP"
+    }
 }

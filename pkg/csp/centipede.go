@@ -197,28 +197,9 @@ func couldBe(a, b graph.Properties) bool {
 	// TODO find a better place for this
 	if bname, ok := b["name"]; !ok {
 		return true
-	} else {
-		return nameMatch(a, bname.(string)) || namesMatch(a, bname.(string))
-	}
-}
-
-func nameMatch(a graph.Properties, bname string) bool {
-	if aname, ok := a["name"]; !ok {
+	} else if aname, ok := a["name"]; !ok {
 		return false
 	} else {
 		return aname == bname
 	}
-}
-
-func namesMatch(a graph.Properties, bname string) bool {
-	if anames, ok := a["names"]; !ok {
-		return false
-	} else {
-		for _, aname := range anames.([]string) {
-			if aname == bname {
-				return true
-			}
-		}
-	}
-	return false
 }

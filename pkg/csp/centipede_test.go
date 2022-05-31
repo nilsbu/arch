@@ -117,24 +117,6 @@ func TestCentipedeMatch(t *testing.T) {
 			true, []graph.NodeIndex{{0, 0}}, nil,
 		},
 		{
-			"name in names",
-			[]func() *graph.Graph{
-				func() *graph.Graph {
-					g := graph.New(nil)
-					g.Node(graph.NodeIndex{}).Properties["name"] = "b"
-					g.Node(graph.NodeIndex{}).Properties["names"] = []string{"a", "x"}
-					return g
-				},
-				func() *graph.Graph {
-					g := graph.New(nil)
-					g.Node(graph.NodeIndex{}).Properties["name"] = "a"
-					g, _ = g.Leaves()
-					return g
-				},
-			},
-			true, []graph.NodeIndex{{0, 0}}, nil,
-		},
-		{
 			"names don't match",
 			[]func() *graph.Graph{
 				func() *graph.Graph {
