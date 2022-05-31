@@ -59,7 +59,7 @@ func TestTerminal(t *testing.T) {
 				t0 + 12, t0, t0, t0, t0 + 16, 10,
 				t0 + 2, 9553, int(' '), int(' '), t0 + 2, 10,
 				t0 + 2, 9562, int(' '), 9552, t0 + 2, 10,
-				t0 + 2, int(' '), int(' '), int('!'), t0 + 2, 10,
+				t0 + 2, int(' '), int(' '), int('.'), t0 + 2, 10,
 				t0 + 20, t0, t0, t0, t0 + 24, 10}),
 		},
 		{
@@ -102,6 +102,31 @@ func TestTerminal(t *testing.T) {
 			func() *world.Tiles {
 				data := world.CreateTiles(3, 3, world.Tile{Type: world.Free})
 				world.DrawRectangle(data, 0, 0, 0, 1, world.Tile{Type: world.TileType(255)})
+				return data
+			},
+			false,
+			"",
+		},
+		{
+			"various textures",
+			func() *world.Tiles {
+				data := world.CreateTiles(3, 1, world.Tile{Type: world.Free})
+				world.DrawRectangle(data, 0, 0, 0, 0, world.Tile{Type: world.Occupied, Texture: 0})
+				world.DrawRectangle(data, 1, 0, 1, 0, world.Tile{Type: world.Occupied, Texture: 1})
+				world.DrawRectangle(data, 2, 0, 2, 0, world.Tile{Type: world.Occupied, Texture: 2})
+				return data
+			},
+			true,
+			toStr([]int{
+				t0 + 12, t0, t0, t0, t0 + 16, 10,
+				t0 + 2, int('.'), int('#'), int('@'), t0 + 2, 10,
+				t0 + 20, t0, t0, t0, t0 + 24, 10}),
+		},
+		{
+			"invalid texture",
+			func() *world.Tiles {
+				data := world.CreateTiles(3, 1, world.Tile{Type: world.Free})
+				world.DrawRectangle(data, 0, 0, 0, 0, world.Tile{Type: world.Occupied, Texture: 30000})
 				return data
 			},
 			false,

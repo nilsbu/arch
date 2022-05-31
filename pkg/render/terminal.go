@@ -19,7 +19,14 @@ const t1 = 9552
 // https://www.w3.org/TR/xml-entity-names/025.html
 
 // ErrIllegalData is returned when false data was passed to a rendering function.
-var ErrIllegalData = errors.New("illegal data")
+var ErrIllegalData = errors.New("illegal tiles")
+
+var occupiedChars = map[int16]rune{
+	0: '.',
+	1: '#',
+	2: '@',
+	3: 'X',
+}
 
 // Terminal renders tiles by writing Unicode characters into a io.Writer.
 // An error is returned when the input contains data that can't be rendered. This should not be the case when
@@ -57,9 +64,8 @@ func Terminal(w io.Writer, data *world.Tiles) error {
 }
 
 func getChar(data *world.Tiles, x, y int) (rune, error) {
-	t := data.Get(x, y).Type
-
-	switch t {
+	tile := data.Get(x, y)
+	switch tile.Type {
 	case world.Free:
 		return ' ', nil
 	case world.Wall:
@@ -67,9 +73,13 @@ func getChar(data *world.Tiles, x, y int) (rune, error) {
 	case world.Door:
 		return ' ', nil
 	case world.Occupied:
-		return '!', nil
+		if r, ok := occupiedChars[tile.Texture]; ok {
+			return r, nil
+		} else {
+			return 0, fmt.Errorf("%w: texture %v is undefined", ErrIllegalData, tile.Texture)
+		}
 	default:
-		return 'x', fmt.Errorf("unexpected tile type: %v", t)
+		return 'x', fmt.Errorf("%w: unexpected tile type: %v", ErrIllegalData, tile.Texture)
 	}
 }
 
