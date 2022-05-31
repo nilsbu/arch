@@ -24,10 +24,7 @@ func (c *Centipede) Match(graphs []*graph.Graph) (ok bool, matches []graph.NodeI
 
 	defer c.cleanup()
 
-	if err := c.setup(graphs); err != nil {
-		return false, nil, fmt.Errorf("cannot setup centipede matching: %w", err)
-	}
-
+	c.setup(graphs)
 	c.initVars()
 	c.setAdjacencyConstraints()
 	c.setHierarchyConstraints()
