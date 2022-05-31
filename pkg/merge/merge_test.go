@@ -14,9 +14,9 @@ import (
 	tr "github.com/nilsbu/arch/test/rule"
 )
 
-type checker func([]*graph.Graph) (bool, error)
+type checker func([]*graph.Graph) (bool, []graph.NodeIndex, error)
 
-func (fc checker) Match(graphs []*graph.Graph) (bool, error) {
+func (fc checker) Match(graphs []*graph.Graph) (bool, []graph.NodeIndex, error) {
 	return fc(graphs)
 }
 
@@ -46,7 +46,7 @@ func with(r *merge.Resolver, add map[string]rule.Rule) *merge.Resolver {
 }
 
 func TestBuild(t *testing.T) {
-	allOk := checker(func([]*graph.Graph) (bool, error) { return true, nil })
+	allOk := checker(func([]*graph.Graph) (bool, []graph.NodeIndex, error) { return true, nil, nil })
 
 	resolver := &merge.Resolver{
 		Name: "@",
@@ -134,7 +134,6 @@ func TestBuild(t *testing.T) {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
 				node.Properties["name"] = "R"
-				node.Properties["names"] = []string{}
 				return g
 			},
 			nil,
@@ -147,11 +146,9 @@ func TestBuild(t *testing.T) {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
 				node.Properties["name"] = "1"
-				node.Properties["names"] = []string{}
 				nidx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nidx)
 				node.Properties["name"] = "R"
-				node.Properties["names"] = []string{"1", "a"}
 				return g
 			},
 			nil,
@@ -166,30 +163,27 @@ func TestBuild(t *testing.T) {
 		{
 			"reject R in child",
 			[]string{`{"@":"1","a":"Root","Root":[{"@":"1","a":{"@":"R"}}, {"@":"1","a":{"@":"P"}}]}`},
-			checker(func(graphs []*graph.Graph) (bool, error) {
+			checker(func(graphs []*graph.Graph) (bool, []graph.NodeIndex, error) {
 				for _, g := range graphs {
 					for _, nidx := range getNodes(g) {
 						if g.Node(nidx).Properties["name"] == "R" {
-							return false, nil
+							return false, nil, nil
 						}
 					}
 				}
-				return true, nil
+				return true, nil, nil
 			}),
 			resolver,
 			func() *graph.Graph {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
 				node.Properties["name"] = "1"
-				node.Properties["names"] = []string{}
 				nidx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nidx)
 				node.Properties["name"] = "1"
-				node.Properties["names"] = []string{"1", "a"}
 				nidx, _ = g.Add(nidx)
 				node = g.Node(nidx)
 				node.Properties["name"] = "P"
-				node.Properties["names"] = []string{"1", "a", "1", "a"}
 				return g
 			},
 			nil,
@@ -200,8 +194,7 @@ func TestBuild(t *testing.T) {
 				`{"@":"1","a":"Root","Root":[
 					{"@":"1","a":[{"@":"R"},{"@":"R"},{"@":"R"}]},
 					{"@":"1","a":{"@":"P"}}]}`,
-				`{"@":"1","a":"Root","Root":[
-						{"@":"1","a":{"@":"P"}}]}`,
+				`{"@":"1","a":{"@":"P"}}`,
 			},
 			&csp.Centipede{},
 			resolver,
@@ -209,15 +202,12 @@ func TestBuild(t *testing.T) {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
 				node.Properties["name"] = "1"
-				node.Properties["names"] = []string{}
 				nidx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nidx)
 				node.Properties["name"] = "1"
-				node.Properties["names"] = []string{"1", "a"}
 				nidx, _ = g.Add(nidx)
 				node = g.Node(nidx)
 				node.Properties["name"] = "P"
-				node.Properties["names"] = []string{"1", "a", "1", "a"}
 				return g
 			},
 			nil,
@@ -228,8 +218,8 @@ func TestBuild(t *testing.T) {
 				`{"@":"1","a":"Root","Root":[{"@":"1","a":{"@":"P"}}]}`,
 				`{"@":"1","a":"Root","Root":[{"@":"1","a":{"@":"P"}}]}`,
 			},
-			checker(func(graphs []*graph.Graph) (bool, error) {
-				return false, merge.ErrInvalidBlueprint // TODO this is not the correct error
+			checker(func(graphs []*graph.Graph) (bool, []graph.NodeIndex, error) {
+				return false, nil, merge.ErrInvalidBlueprint // TODO this is not the correct error
 			}),
 			resolver,
 			func() *graph.Graph { return nil },
@@ -247,17 +237,13 @@ func TestBuild(t *testing.T) {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
 				node.Properties["name"] = "1"
-				node.Properties["names"] = []string{}
 				nx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nx)
 				node.Properties["name"] = "1"
-				node.Properties["names"] = []string{"1", "a"}
 				n0, _ := g.Add(nx)
 				g.Node(n0).Properties["name"] = "R"
-				g.Node(n0).Properties["names"] = []string{"1", "a", "1", "a"}
 				n1, _ := g.Add(nx)
 				g.Node(n1).Properties["name"] = "P"
-				g.Node(n1).Properties["names"] = []string{"1", "a", "1", "a"}
 				return g
 			},
 			nil,
@@ -290,18 +276,15 @@ func TestBuild(t *testing.T) {
 				node := g.Node(graph.NodeIndex{})
 				node.Properties["name"] = "1"
 				node.Properties["set"] = "self"
-				node.Properties["names"] = []string{}
 				nidx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nidx)
 				node.Properties["name"] = "1"
 				node.Properties["set"] = "self"
 				node.Properties["asdf"] = "child"
-				node.Properties["names"] = []string{"1", "a"}
 				nidx, _ = g.Add(nidx)
 				node = g.Node(nidx)
 				node.Properties["name"] = "R"
 				node.Properties["asdf"] = "child"
-				node.Properties["names"] = []string{"1", "a", "1", "a"}
 				return g
 			},
 			nil,
@@ -355,15 +338,12 @@ func TestBuild(t *testing.T) {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
 				node.Properties["name"] = "1"
-				node.Properties["names"] = []string{}
 				nidx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nidx)
 				node.Properties["name"] = "1"
-				node.Properties["names"] = []string{"1", "a"}
 				nidx, _ = g.Add(nidx)
 				node = g.Node(nidx)
 				node.Properties["name"] = "P"
-				node.Properties["names"] = []string{"1", "a", "1", "a"}
 				return g
 			},
 			nil,
@@ -420,15 +400,12 @@ func TestBuild(t *testing.T) {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
 				node.Properties["name"] = "1"
-				node.Properties["names"] = []string{}
 				nidx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nidx)
 				node.Properties["name"] = "1"
-				node.Properties["names"] = []string{"1", "a"}
 				nidx, _ = g.Add(nidx)
 				node = g.Node(nidx)
 				node.Properties["name"] = "Leaf"
-				node.Properties["names"] = []string{"1", "a", "1", "a"}
 				node.Properties["leaf"] = true
 				return g
 			},
@@ -443,19 +420,15 @@ func TestBuild(t *testing.T) {
 				g := graph.New(nil)
 				node := g.Node(graph.NodeIndex{})
 				node.Properties["name"] = "1"
-				node.Properties["names"] = []string{}
 				nidx, _ := g.Add(graph.NodeIndex{})
 				node = g.Node(nidx)
 				node.Properties["name"] = "1"
-				node.Properties["names"] = []string{"1", "a"}
 				nidx, _ = g.Add(nidx)
 				node = g.Node(nidx)
 				node.Properties["name"] = "1"
-				node.Properties["names"] = []string{"1", "a", "1", "a"}
 				nidx, _ = g.Add(nidx)
 				node = g.Node(nidx)
 				node.Properties["name"] = "Leaf"
-				node.Properties["names"] = []string{"1", "a", "1", "a", "1", "a"}
 				node.Properties["leaf"] = true
 				return g
 			},

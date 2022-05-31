@@ -17,23 +17,21 @@ type Centipede struct {
 	constraints centipede.Constraints[int]
 }
 
-func (c *Centipede) Match(graphs []*graph.Graph) (ok bool, err error) {
+func (c *Centipede) Match(graphs []*graph.Graph) (ok bool, matches []graph.NodeIndex, err error) {
 	if len(graphs) < 2 {
-		return true, nil
+		return true, nil, nil
 	}
 
 	defer c.cleanup()
 
-	if err := c.setup(graphs); err != nil {
-		return false, fmt.Errorf("cannot setup centipede matching: %w", err)
-	}
-
+	c.setup(graphs)
 	c.initVars()
-	c.constraints = append(c.constraints, centipede.AllUnique[int](c.names...)...)
 	c.setAdjacencyConstraints()
+	c.setHierarchyConstraints()
 
 	solver := centipede.NewBackTrackingCSPSolver(c.vars, c.constraints)
 	ok, err = solver.Solve(context.TODO())
+	matches = c.getMatches()
 
 	return
 }
@@ -47,15 +45,23 @@ func (c *Centipede) cleanup() {
 }
 
 func (c *Centipede) setup(graphs []*graph.Graph) error {
-	for _, g := range graphs {
-		if flat, err := g.Leaves(); err != nil {
-			return err
+	for i, g := range graphs {
+		c.graphs = append(c.graphs, g)
+		if i == 0 {
+			c.nodes = append(c.nodes, getAllChildren(g))
 		} else {
-			c.graphs = append(c.graphs, flat)
-			c.nodes = append(c.nodes, flat.Children(graph.NodeIndex{}))
+			c.nodes = append(c.nodes, g.Children(graph.NodeIndex{}))
 		}
 	}
 	return nil
+}
+
+func getAllChildren(g *graph.Graph) []graph.NodeIndex {
+	nidxs := []graph.NodeIndex{{}}
+	for i := 0; i < len(nidxs); i++ {
+		nidxs = append(nidxs, g.Children(nidxs[i])...)
+	}
+	return nidxs
 }
 
 func (c *Centipede) initVars() {
@@ -77,17 +83,28 @@ func (c *Centipede) setAdjacencyConstraints() {
 
 	for i, nodes := range c.nodes {
 		adjacent[i] = make([][]bool, len(nodes))
-		for j, nidx0 := range nodes {
+		lookup := map[graph.NodeIndex]int{}
+		for i, nidx := range nodes {
+			lookup[nidx] = i
+		}
+
+		for j, nidx := range nodes {
 			adjacent[i][j] = make([]bool, len(nodes))
-			for _, eidx := range c.graphs[i].Node(nidx0).Edges {
+			for _, eidx := range c.graphs[i].Node(nidx).Edges {
 				enidxs := c.graphs[i].Nodes(eidx)
-				var nidx1 graph.NodeIndex
-				if enidxs[0][0] == nidx0 {
-					nidx1 = enidxs[1][0]
-				} else {
-					nidx1 = enidxs[0][0]
+
+				otherIdx := 0
+				for _, nidx2 := range enidxs[0] {
+					if nidx == nidx2 {
+						otherIdx = 1
+						break
+					}
 				}
-				adjacent[i][j][nidx1[1]] = true
+
+				for _, onidx := range enidxs[otherIdx] {
+					k := lookup[onidx]
+					adjacent[i][j][k] = true
+				}
 			}
 		}
 	}
@@ -115,32 +132,71 @@ func (c *Centipede) setAdjacencyConstraints() {
 	}
 }
 
+func (c *Centipede) setHierarchyConstraints() {
+	lookup := map[graph.NodeIndex]int{} // TODO don't duplicate lookup
+	for i, nidx := range c.nodes[0] {
+		lookup[nidx] = i
+	}
+
+	upAbove := make([][]bool, len(c.nodes[0]))
+	for i := range c.nodes[0] {
+		upAbove[i] = make([]bool, len(c.nodes[0]))
+		for j := range c.nodes[0] {
+			upAbove[i][j] = true
+		}
+	}
+
+	for i := 0; i < len(c.nodes[0]); i++ {
+		pre := c.nodes[0][i]
+		idx0 := lookup[pre]
+		upAbove[idx0][idx0] = false
+
+		for parent := c.graphs[0].Node(pre).Parent; parent != graph.NoParent; parent = c.graphs[0].Node(pre).Parent {
+			idx1 := lookup[parent]
+			upAbove[idx0][idx1] = false
+			upAbove[idx1][idx0] = false
+			pre = parent
+		}
+	}
+
+	for i := range c.nodes[1] {
+		for j := range c.nodes[1] {
+			if i != j {
+				f := func(i, j int) centipede.VariablesConstraintFunction[int] {
+					return func(vars *centipede.Variables[int]) bool {
+						if vars.Find(c.names[i]).Empty || vars.Find(c.names[j]).Empty {
+							return true
+						}
+						v0 := vars.Find(c.names[i]).Value
+						v1 := vars.Find(c.names[j]).Value
+						return upAbove[v0][v1]
+					}
+				}(i, j)
+
+				c.constraints = append(c.constraints, centipede.Constraint[int]{
+					Vars:               centipede.VariableNames{c.names[i], c.names[j]},
+					ConstraintFunction: f,
+				})
+			}
+		}
+	}
+}
+
+func (c *Centipede) getMatches() []graph.NodeIndex {
+	matches := make([]graph.NodeIndex, len(c.vars))
+	for i, v := range c.vars {
+		matches[i] = c.nodes[0][v.Value]
+	}
+	return matches
+}
+
 func couldBe(a, b graph.Properties) bool {
 	// TODO find a better place for this
 	if bname, ok := b["name"]; !ok {
 		return true
-	} else {
-		return nameMatch(a, bname.(string)) || namesMatch(a, bname.(string))
-	}
-}
-
-func nameMatch(a graph.Properties, bname string) bool {
-	if aname, ok := a["name"]; !ok {
+	} else if aname, ok := a["name"]; !ok {
 		return false
 	} else {
 		return aname == bname
 	}
-}
-
-func namesMatch(a graph.Properties, bname string) bool {
-	if anames, ok := a["names"]; !ok {
-		return false
-	} else {
-		for _, aname := range anames.([]string) {
-			if aname == bname {
-				return true
-			}
-		}
-	}
-	return false
 }
