@@ -17,7 +17,7 @@ const (
 // It contains information about the TileType and about the appearance.
 type Tile struct {
 	Type    TileType
-	Texture int16
+	Texture int
 }
 
 // Tiles is a field of tiles.

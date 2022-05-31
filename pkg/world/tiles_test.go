@@ -11,7 +11,7 @@ func TestTiles(t *testing.T) {
 		name    string
 		create  func() *world.Tiles
 		types   []world.TileType
-		texture []int16
+		texture []int
 	}{
 		{
 			"zero, zero",
@@ -19,7 +19,7 @@ func TestTiles(t *testing.T) {
 				return world.CreateTiles(0, 0, world.Tile{world.Free, 0})
 			},
 			[]world.TileType{},
-			[]int16{},
+			[]int{},
 		},
 		{
 			"single line free",
@@ -27,7 +27,7 @@ func TestTiles(t *testing.T) {
 				return world.CreateTiles(3, 1, world.Tile{world.Wall, 1})
 			},
 			[]world.TileType{world.Wall, world.Wall, world.Wall},
-			[]int16{1, 1, 1, 1, 1},
+			[]int{1, 1, 1, 1, 1},
 		},
 		{
 			"2D all the same",

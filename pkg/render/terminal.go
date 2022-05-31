@@ -21,7 +21,7 @@ const t1 = 9552
 // ErrIllegalData is returned when false data was passed to a rendering function.
 var ErrIllegalData = errors.New("illegal tiles")
 
-var occupiedChars = map[int16]rune{
+var occupiedChars = map[int]rune{
 	0: '.',
 	1: '#',
 	2: '@',
