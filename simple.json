@@ -45,8 +45,9 @@
         "@rule": "FurnishedRoom",
         "furniture": {
             "@rule": "Furniture",
-            "elements": "Bed",
-            "sizes": "[2,4]"
+            "elements": ["Bed", "Table"],
+            "sizes": ["[2,4]", "[3,2]"],
+            "anchors": ["far-left", "near-right"]
         }
     },
     "Room": {
@@ -56,5 +57,6 @@
         "@rule": "NOP"
     },
 
-    "Bed": {"@rule": "Occupy", "texture": "1"}
+    "Bed": {"@rule": "Occupy", "texture": "1"},
+    "Table": {"@rule": "Occupy", "texture": "2"}
 }

@@ -182,3 +182,8 @@ func assertInside(rect, in Rectangle) error {
 		return nil
 	}
 }
+
+// CalcAnchorPoint calculates the position of an anchor point.
+func CalcAnchorPoint(rect Rectangle, anchor Anchor, direction Direction) Point {
+	return calcAnchorPoint(rect, rotateAnchor(anchor, Difference(direction, Down)))
+}

@@ -377,3 +377,42 @@ func TestRotateWithin(t *testing.T) {
 		})
 	}
 }
+
+func TestCalcAnchorPoint(t *testing.T) {
+	for _, c := range []struct {
+		name      string
+		rect      area.Rectangle
+		anchor    area.Anchor
+		direction area.Direction
+		point     area.Point
+	}{
+		{
+			"down, near-right",
+			area.Rectangle{3, 3, 20, 24},
+			area.NearRight,
+			area.Down,
+			area.Point{3, 3},
+		},
+		{
+			"right, far-left",
+			area.Rectangle{3, 3, 20, 24},
+			area.FarLeft,
+			area.Right,
+			area.Point{20, 3},
+		},
+		{
+			"center, up",
+			area.Rectangle{10, 10, 20, 24},
+			area.Center,
+			area.Up,
+			area.Point{15, 17},
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			point := area.CalcAnchorPoint(c.rect, c.anchor, c.direction)
+			if c.point != point {
+				t.Errorf("expected %v but got %v", c.point, point)
+			}
+		})
+	}
+}

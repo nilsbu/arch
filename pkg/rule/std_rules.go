@@ -195,6 +195,8 @@ func (r FurnishedRoom) PrepareGraph(
 		rect := a.GetRect()
 		(*area.AreaNode)(interior).SetRect(
 			area.Rectangle{X0: rect.X0 + 1, Y0: rect.Y0 + 1, X1: rect.X1 - 1, Y1: rect.Y1 - 1})
+
+		interior.Properties["orientation"] = RoomOrientation(g, nidx)
 	}
 
 	return nil
@@ -216,24 +218,85 @@ func (r Furniture) PrepareGraph(
 
 	elements := children["elements"]
 	sizes := bp.Values("sizes")
+	anchors := bp.Values("anchors")
 	if len(elements) != len(sizes) {
 		return fmt.Errorf("%w: have %v elements and %v sizes",
 			ErrPreparation, len(elements), len(sizes))
+	} else if len(elements) != len(anchors) {
+		return fmt.Errorf("%w: have %v elements and %v anchors",
+			ErrPreparation, len(elements), len(anchors))
 	} else {
 		a := (*area.AreaNode)(g.Node(nidx))
 		rect := a.GetRect()
+		roomOrientation := a.Properties["orientation"].(area.Direction)
 		for i := range sizes {
 			size := []int{}
-			if err := json.Unmarshal([]byte(bp.Values("sizes")[i]), &size); err != nil {
+			if err := json.Unmarshal([]byte(sizes[i]), &size); err != nil {
+				return err
+			} else if anchor, err := getAnchor(anchors[i]); err != nil {
 				return err
 			} else {
 				e := (*area.AreaNode)(g.Node(elements[i]))
-				// TODO allow for positions other then top-left
-				e.SetRect(area.Rectangle{
-					X0: rect.X0, Y0: rect.Y0, X1: rect.X0 + size[0] - 1, Y1: rect.Y0 + size[1] - 1})
+
+				preRect := intoCorner(size, rect, anchor)
+				if postRect, err := area.RotateWithin(preRect, rect, area.Down, roomOrientation, anchor); err != nil {
+					return fmt.Errorf("%w: %v", ErrInvalidGraph, err)
+				} else {
+					e.SetRect(postRect)
+				}
 			}
 		}
 		return nil
+	}
+}
+
+func getAnchor(str string) (area.Anchor, error) {
+	switch str {
+	case "near-left":
+		return area.NearLeft, nil
+	case "far-left":
+		return area.FarLeft, nil
+	case "near-right":
+		return area.NearRight, nil
+	case "far-right":
+		return area.FarRight, nil
+	case "center":
+		return area.Center, nil
+	default:
+		return 0, fmt.Errorf("%w: '%v' is no valid anchor", ErrPreparation, str)
+	}
+}
+
+func intoCorner(size []int, in area.Rectangle, anchor area.Anchor) area.Rectangle {
+	ap := area.CalcAnchorPoint(in, anchor, area.Down)
+	if anchor == area.Center {
+		p0 := area.Point{
+			X: ap.X - size[0]/2,
+			Y: ap.Y - size[1]/2,
+		}
+		return area.Rectangle{
+			X0: p0.X,
+			Y0: p0.Y,
+			X1: p0.X + size[0] - 1,
+			Y1: p0.Y + size[1] - 1,
+		}
+	} else {
+		rect := area.Rectangle{
+			X0: ap.X,
+			Y0: ap.Y,
+			X1: ap.X + size[0] - 1,
+			Y1: ap.Y + size[1] - 1}
+
+		if anchor == area.NearLeft || anchor == area.FarLeft {
+			rect.X0 -= size[0] - 1
+			rect.X1 -= size[0] - 1
+		}
+		if anchor == area.FarLeft || anchor == area.FarRight {
+			rect.Y0 -= size[1] - 1
+			rect.Y1 -= size[1] - 1
+		}
+
+		return rect
 	}
 }
 
