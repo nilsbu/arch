@@ -156,9 +156,22 @@ func TestBuild(t *testing.T) {
 		{
 			"property 'a' required but not defined",
 			[]string{`{"@":"1"}`},
-			allOk, resolver,
+			allOk, with(resolver, map[string]rule.Rule{
+				"1": &tr.RuleMock{
+					Params: []string{"a"},
+					Prep: func(
+						g *graph.Graph, nidx graph.NodeIndex,
+						children map[string][]graph.NodeIndex, bp *blueprint.Blueprint) error {
+						if _, ok := children["a"]; !ok {
+							return rule.ErrPreparation
+						} else {
+							return nil
+						}
+					},
+				},
+			}),
 			func() *graph.Graph { return nil },
-			merge.ErrInvalidBlueprint,
+			rule.ErrPreparation,
 		},
 		{
 			"reject R in child",

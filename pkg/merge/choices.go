@@ -115,10 +115,6 @@ func calcBlock(bp *blueprint.Blueprint, resolver *Resolver) (*block, error) {
 
 func calcGroup(bp *blueprint.Blueprint, property string, resolver *Resolver) (group, error) {
 	values := bp.Values(property)
-	if len(values) == 0 {
-		return nil, fmt.Errorf("%w: poperty '%v' has no values", ErrInvalidBlueprint, property)
-	}
-
 	group := make(group, len(values))
 	for i, opt := range values {
 		var err error
