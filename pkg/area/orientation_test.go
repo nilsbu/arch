@@ -1,6 +1,8 @@
 package area_test
 
 import (
+	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/nilsbu/arch/pkg/area"
@@ -191,6 +193,186 @@ func TestTurn(t *testing.T) {
 			if out != c.out {
 				t.Errorf("expected direction %v but got %v",
 					c.out, out)
+			}
+		})
+	}
+}
+
+func TestDifferenct(t *testing.T) {
+	for _, c := range []struct {
+		name string
+		a, b area.Direction
+		diff int
+	}{
+		{
+			"both up",
+			area.Up,
+			area.Up,
+			0,
+		},
+		{
+			"both left",
+			area.Left,
+			area.Left,
+			0,
+		},
+		{
+			"up & right",
+			area.Up,
+			area.Right,
+			-90,
+		},
+		{
+			"down & up",
+			area.Down,
+			area.Up,
+			180,
+		},
+		{
+			"left & right",
+			area.Left,
+			area.Right,
+			180,
+		},
+		{
+			"right & left",
+			area.Right,
+			area.Left,
+			180,
+		},
+		{
+			"up & left",
+			area.Up,
+			area.Left,
+			90,
+		},
+		{
+			"left & up",
+			area.Left,
+			area.Up,
+			-90,
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			diff := area.Difference(c.a, c.b)
+			if c.diff != diff {
+				t.Errorf("expected diff to be %v but was %v", c.diff, diff)
+			}
+		})
+	}
+}
+
+func TestRotateWithin(t *testing.T) {
+	for _, c := range []struct {
+		name     string
+		rect, in area.Rectangle
+		from, to area.Direction
+		anchor   area.Anchor
+		result   area.Rectangle
+		err      error
+	}{
+		{
+			"size one, don't rotate",
+			area.Rectangle{0, 0, 1, 1},
+			area.Rectangle{0, 0, 10, 10},
+			area.Down,
+			area.Down,
+			area.FarLeft,
+			area.Rectangle{0, 0, 1, 1},
+			nil,
+		},
+		{
+			"size one, don't rotate, orientation up",
+			area.Rectangle{0, 0, 1, 1},
+			area.Rectangle{0, 0, 10, 10},
+			area.Up,
+			area.Up,
+			area.FarLeft,
+			area.Rectangle{0, 0, 1, 1},
+			nil,
+		},
+		{
+			"size one, rotated 180 deg",
+			area.Rectangle{0, 0, 1, 1},
+			area.Rectangle{0, 0, 10, 10},
+			area.Up,
+			area.Down,
+			area.FarLeft,
+			area.Rectangle{9, 9, 10, 10},
+			nil,
+		},
+		{
+			"size 2x1, rotated 90 deg",
+			area.Rectangle{0, 0, 1, 2},
+			area.Rectangle{0, 0, 10, 10},
+			area.Up,
+			area.Right,
+			area.FarLeft,
+			area.Rectangle{8, 0, 10, 1},
+			nil,
+		},
+		{
+			"size 2x1, rotated -90 deg, non-rectangular room",
+			area.Rectangle{17, 7, 18, 9},
+			area.Rectangle{0, 0, 20, 10},
+			area.Right,
+			area.Up,
+			area.FarRight,
+			area.Rectangle{17, 2, 19, 3},
+			nil,
+		},
+		{
+			"size 3x1, rotate 90 around center",
+			area.Rectangle{8, 4, 9, 6},
+			area.Rectangle{0, 0, 20, 10},
+			area.Right,
+			area.Left,
+			area.Center,
+			area.Rectangle{11, 4, 12, 6},
+			nil,
+		},
+		{
+			"non-zero top-left",
+			area.Rectangle{2, 3, 3, 4},
+			area.Rectangle{2, 2, 10, 10},
+			area.Left,
+			area.Up,
+			area.NearLeft,
+			area.Rectangle{8, 2, 9, 3},
+			nil,
+		},
+		{
+			"near right as anchor",
+			area.Rectangle{9, 3, 10, 7},
+			area.Rectangle{0, 2, 10, 10},
+			area.Left,
+			area.Down,
+			area.NearRight,
+			area.Rectangle{1, 2, 5, 3},
+			nil,
+		},
+		{
+			"doesn't fit after rotation",
+			area.Rectangle{2, 3, 3, 7},
+			area.Rectangle{2, 0, 5, 10},
+			area.Left,
+			area.Down,
+			area.Center,
+			area.Rectangle{2, 6, 6, 7},
+			area.ErrInvalidRotation,
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			if result, err := area.RotateWithin(c.rect, c.in, c.from, c.to, c.anchor); err != nil && c.err == nil {
+				t.Errorf("unexpected error: %v", err)
+			} else if err == nil && c.err != nil {
+				t.Errorf("expected error but non ocurred")
+			} else if !errors.Is(err, c.err) {
+				t.Errorf("wrong type of error\nexpect: %v\nactual: %v", c.err, err)
+			} else if err == nil {
+				if !reflect.DeepEqual(c.result, result) {
+					t.Errorf("expected %v but got %v", c.result, result)
+				}
 			}
 		})
 	}

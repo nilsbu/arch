@@ -61,3 +61,13 @@ const (
 	Down  Direction = 4
 	Left  Direction = 8
 )
+
+type Anchor byte
+
+const (
+	NearLeft  Anchor = 0
+	NearRight Anchor = 1
+	FarLeft   Anchor = 2
+	FarRight  Anchor = 3
+	Center    Anchor = 4
+)
